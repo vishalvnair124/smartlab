@@ -1,0 +1,65 @@
+-- Table: student_details
+CREATE TABLE student_details (
+    std_id INT AUTO_INCREMENT PRIMARY KEY,
+    std_email VARCHAR(255) UNIQUE NOT NULL,
+    std_name VARCHAR(255) NOT NULL,
+    std_passwd VARCHAR(255) NOT NULL,
+    bat_id INT NOT NULL,
+    std_status INT NOT NULL,
+    FOREIGN KEY (bat_id) REFERENCES batch_details(bat_id)
+);
+
+-- Table: batch_details
+CREATE TABLE batch_details (
+    bat_id INT AUTO_INCREMENT PRIMARY KEY,
+    bat_name VARCHAR(255) NOT NULL,
+    bat_status INT NOT NULL
+);
+
+-- Table: course_details
+CREATE TABLE course_details (
+    course_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_name VARCHAR(255) NOT NULL,
+    bat_id INT NOT NULL,
+    course_status INT NOT NULL,
+    FOREIGN KEY (bat_id) REFERENCES batch_details(bat_id)
+);
+
+-- Table: device_details
+CREATE TABLE device_details (
+    device_id INT AUTO_INCREMENT PRIMARY KEY,
+    device_name VARCHAR(255) NOT NULL,
+    device_mac VARCHAR(255) UNIQUE NOT NULL,
+    device_status INT NOT NULL
+);
+
+-- Table: session_details
+CREATE TABLE session_details (
+    s_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    make_attendance INT NOT NULL,
+    s_date DATE NOT NULL,
+    s_start_time TIME NOT NULL,
+    s_end_time TIME NOT NULL,
+    FOREIGN KEY (course_id) REFERENCES course_details(course_id)
+);
+
+-- Table: student_attendance
+CREATE TABLE student_attendance (
+    att_id INT AUTO_INCREMENT PRIMARY KEY,
+    std_id INT NOT NULL,
+    s_id INT NOT NULL,
+    login_time DATETIME,
+    logout_time DATETIME,
+    FOREIGN KEY (std_id) REFERENCES student_details(std_id),
+    FOREIGN KEY (s_id) REFERENCES session_details(s_id)
+);
+
+-- Table: admin
+CREATE TABLE admin (
+    admin_id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_name VARCHAR(255) NOT NULL,
+    admin_email VARCHAR(255) UNIQUE NOT NULL,
+    admin_passwd VARCHAR(255) NOT NULL,
+    admin_status INT NOT NULL
+);
