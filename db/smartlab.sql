@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 23, 2024 at 03:29 PM
+-- Generation Time: Nov 24, 2024 at 02:37 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -111,6 +111,7 @@ CREATE TABLE `student_attendance` (
 CREATE TABLE `student_details` (
   `std_id` int(11) NOT NULL,
   `std_email` varchar(255) NOT NULL,
+  `std_rollno` varchar(30) NOT NULL,
   `std_name` varchar(255) NOT NULL,
   `std_passwd` varchar(255) NOT NULL,
   `bat_id` int(11) NOT NULL,

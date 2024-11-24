@@ -63,3 +63,5 @@ CREATE TABLE admin (
     admin_passwd VARCHAR(255) NOT NULL,
     admin_status INT NOT NULL
 );
+
+ALTER TABLE `student_details` ADD `std_rollno` VARCHAR(30) NOT NULL AFTER `std_email`;
