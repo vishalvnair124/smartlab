@@ -102,10 +102,7 @@ def sessions():
     # Fetch and display session details
     return render_template('admin/sessions.html')
 
-@app.route('/students')
-def students():
-    # Fetch and display student details
-    return render_template('admin/students.html')
+
 
 
 @app.route('/create_batch', methods=['GET', 'POST'])
@@ -275,6 +272,56 @@ def deactivate_course(course_id):
 
     return redirect('/courses')
 
+@app.route('/students', methods=['GET'])
+def students():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Fetch all students along with their batch name
+    cursor.execute("""
+        SELECT student_details.std_id, student_details.std_name, student_details.std_rollno, 
+               batch_details.bat_name, student_details.std_status
+        FROM student_details
+        JOIN batch_details ON student_details.bat_id = batch_details.bat_id
+    """)
+    students = cursor.fetchall()
+
+    conn.close()
+    return render_template('admin/students.html', students=students)
+
+@app.route('/student_details/<int:std_id>', methods=['GET', 'POST'])
+def student_details(std_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        # Handle activation/deactivation
+        action = request.form['action']
+        new_status = 1 if action == 'activate' else 0
+        
+        try:
+            cursor.execute("UPDATE student_details SET std_status = %s WHERE std_id = %s", 
+                           (new_status, std_id))
+            conn.commit()
+            flash(f"Student {'activated' if action == 'activate' else 'deactivated'} successfully!", "success")
+            return redirect('/students')
+        except mysql.connector.Error as e:
+            flash(f"Error updating student status: {str(e)}", "danger")
+
+    # Fetch student details
+    cursor.execute("""
+        SELECT student_details.std_id, student_details.std_name, student_details.std_rollno, 
+               student_details.std_email, student_details.std_passwd, batch_details.bat_name, 
+               student_details.std_status
+        FROM student_details
+        JOIN batch_details ON student_details.bat_id = batch_details.bat_id
+        WHERE student_details.std_id = %s
+    """, (std_id,))
+    student = cursor.fetchone()
+
+    conn.close()
+
+    return render_template('admin/student_details.html', student=student)
 
 
 
