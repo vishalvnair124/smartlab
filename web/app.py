@@ -85,10 +85,7 @@ def admin_dashboard():
                            sessions_count=sessions_count,
                            students_count=students_count)
 
-@app.route('/courses')
-def courses():
-    # Fetch and display course details
-    return render_template('admin/courses.html')
+
 
 @app.route('/batches')
 def batches():
@@ -177,6 +174,106 @@ def deactivate_batch(bat_id):
         conn.close()  # Ensure connection is closed
 
     return redirect('/batches')
+
+
+
+
+# Route to display courses and handle course creation
+@app.route('/courses', methods=['GET', 'POST'])
+def courses():
+    conn = get_db_connection()  # Establish connection
+    cursor = conn.cursor(dictionary=True)  # Use dictionary cursor for ease of access
+
+    if request.method == 'POST':
+        # Handle course creation as before
+        course_name = request.form['course_name']
+        bat_id = request.form['bat_id']
+        course_status = 1  # Default active status
+
+        try:
+            # Insert course into database
+            cursor.execute("INSERT INTO course_details (course_name, bat_id, course_status) VALUES (%s, %s, %s)",
+                           (course_name, bat_id, course_status))
+            conn.commit()
+            flash("Course created successfully!", "success")
+        except mysql.connector.Error as e:
+            flash(f"Error creating course: {str(e)}", "danger")
+        finally:
+            conn.close()
+
+    # Fetch all courses with batch names (JOIN query)
+    cursor.execute("""
+        SELECT course_details.course_id, course_details.course_name, course_details.bat_id, 
+               batch_details.bat_name, course_details.course_status
+        FROM course_details
+        JOIN batch_details ON course_details.bat_id = batch_details.bat_id
+    """)
+    courses = cursor.fetchall()
+
+    # Fetch active batches for the dropdown (only active batches)
+    cursor.execute("SELECT * FROM batch_details WHERE bat_status = 1")  # Only active batches
+    batches = cursor.fetchall()
+
+    conn.close()
+
+    return render_template('admin/courses.html', courses=courses, batches=batches)
+
+
+
+# Route to edit a course
+@app.route('/edit_course/<int:course_id>', methods=['GET', 'POST'])
+def edit_course(course_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        # Handle course edit
+        course_name = request.form['course_name']
+        bat_id = request.form['bat_id']
+        course_status = request.form['course_status']  # Getting the status from the form
+
+        try:
+            cursor.execute("""
+                UPDATE course_details
+                SET course_name = %s, bat_id = %s, course_status = %s
+                WHERE course_id = %s
+            """, (course_name, bat_id, course_status, course_id))
+            conn.commit()
+            flash("Course updated successfully!", "success")
+            return redirect('/courses')
+        except mysql.connector.Error as e:
+            flash(f"Error updating course: {str(e)}", "danger")
+    
+    # Fetch course details for editing
+    cursor.execute("SELECT * FROM course_details WHERE course_id = %s", (course_id,))
+    course = cursor.fetchone()
+
+    # Fetch active batches for dropdown
+    cursor.execute("SELECT * FROM batch_details WHERE bat_status = 1")
+    batches = cursor.fetchall()
+
+    conn.close()
+
+    return render_template('admin/edit_course.html', course=course, batches=batches)
+
+
+
+# Route to deactivate a course
+@app.route('/deactivate_course/<int:course_id>', methods=['GET'])
+def deactivate_course(course_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("UPDATE course_details SET course_status = 0 WHERE course_id = %s", (course_id,))
+        conn.commit()
+        flash("Course deactivated successfully!", "success")
+    except mysql.connector.Error as e:
+        flash(f"Error deactivating course: {str(e)}", "danger")
+    finally:
+        conn.close()
+
+    return redirect('/courses')
 
 
 
