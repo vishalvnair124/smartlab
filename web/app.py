@@ -101,13 +101,6 @@ def batches():
     return render_template('admin/batches.html', batches=batches)
     
 
-@app.route('/sessions')
-def sessions():
-    # Fetch and display session details
-    return render_template('admin/sessions.html')
-
-
-
 
 @app.route('/create_batch', methods=['GET', 'POST'])
 def manage_batches():
@@ -382,6 +375,114 @@ def delete_device(device_id):
     conn.close()
     return redirect('/admin/devices')
 
+@app.route('/admin/session/create', methods=['GET', 'POST'])
+def create_session():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        course_id = request.form['course_id']
+        s_date = request.form['s_date']
+        s_start_time = request.form['s_start_time']
+        s_end_time = request.form['s_end_time']
+        make_attendance = request.form.get('make_attendance', 0)  # Default is 0 if not selected
+
+        # Validate if the course_id exists in course_details
+        cursor.execute("SELECT COUNT(*) AS count FROM course_details WHERE course_id = %s", (course_id,))
+        course_exists = cursor.fetchone()['count']
+
+        if not course_exists:
+            flash("Selected course does not exist.", "danger")
+            return redirect('/admin/session/create')
+
+        try:
+            cursor.execute(
+                """INSERT INTO session_details 
+                (course_id, s_date, s_start_time, s_end_time, make_attendance) 
+                VALUES (%s, %s, %s, %s, %s)""",
+                (course_id, s_date, s_start_time, s_end_time, make_attendance)
+            )
+            conn.commit()
+            flash("Session created successfully!", "success")
+            return redirect('/admin/sessions')
+        except mysql.connector.Error as e:
+            flash(f"Error creating session: {str(e)}", "danger")
+    else:
+        # Fetch courses for the dropdown
+        cursor.execute("SELECT course_id, course_name FROM course_details")
+        courses = cursor.fetchall()
+
+    conn.close()
+    return render_template('admin/session_create.html', courses=courses)
+@app.route('/admin/sessions', methods=['GET'])
+def sessions():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Fetch session details with course names
+    cursor.execute("""
+        SELECT 
+            sd.s_id, 
+            cd.course_name, 
+            sd.s_date, 
+            sd.s_start_time, 
+            sd.s_end_time, 
+            sd.make_attendance 
+        FROM session_details sd
+        JOIN course_details cd ON sd.course_id = cd.course_id
+    """)
+    sessions = cursor.fetchall()
+    
+    conn.close()
+    return render_template('admin/sessions.html', sessions=sessions)
+@app.route('/admin/session/<int:session_id>/edit', methods=['GET', 'POST'])
+def edit_session(session_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        course_id = request.form['course_id']
+        s_date = request.form['s_date']
+        s_start_time = request.form['s_start_time']
+        s_end_time = request.form['s_end_time']
+        make_attendance = request.form.get('make_attendance', 0)
+
+        try:
+            cursor.execute("""
+                UPDATE session_details
+                SET course_id = %s, s_date = %s, s_start_time = %s, s_end_time = %s, make_attendance = %s
+                WHERE s_id = %s
+            """, (course_id, s_date, s_start_time, s_end_time, make_attendance, session_id))
+            conn.commit()
+            flash("Session updated successfully!", "success")
+            return redirect('/admin/sessions')
+        except mysql.connector.Error as e:
+            flash(f"Error updating session: {str(e)}", "danger")
+    else:
+        # Fetch session details for the form
+        cursor.execute("SELECT * FROM session_details WHERE s_id = %s", (session_id,))
+        session = cursor.fetchone()
+
+        # Fetch courses for the dropdown
+        cursor.execute("SELECT course_id, course_name FROM course_details")
+        courses = cursor.fetchall()
+
+    conn.close()
+    return render_template('admin/session_edit.html', session=session, courses=courses)
+@app.route('/admin/session/<int:session_id>/delete', methods=['POST'])
+def delete_session(session_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("DELETE FROM session_details WHERE s_id = %s", (session_id,))
+        conn.commit()
+        flash("Session deleted successfully!", "success")
+    except mysql.connector.Error as e:
+        flash(f"Error deleting session: {str(e)}", "danger")
+    finally:
+        conn.close()
+    return redirect('/admin/sessions')
 
 
 if __name__ == '__main__':
