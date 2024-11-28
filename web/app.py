@@ -61,30 +61,34 @@ def student_dashboard(student_id):
 @app.route('/admin/dashboard')
 def admin_dashboard():
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
 
-    # Query counts from the database
-    cursor.execute("SELECT COUNT(*) FROM course_details")
-    courses_count = cursor.fetchone()[0]
+    # Fetch counts for dashboard
+    cursor.execute("SELECT COUNT(*) as count FROM course_details")
+    courses_count = cursor.fetchone()['count']
 
-    cursor.execute("SELECT COUNT(*) FROM batch_details")
-    batches_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) as count FROM batch_details")
+    batches_count = cursor.fetchone()['count']
 
-    cursor.execute("SELECT COUNT(*) FROM session_details")
-    sessions_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) as count FROM session_details")
+    sessions_count = cursor.fetchone()['count']
 
-    cursor.execute("SELECT COUNT(*) FROM student_details")
-    students_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) as count FROM student_details")
+    students_count = cursor.fetchone()['count']
+
+    cursor.execute("SELECT COUNT(*) as count FROM device_details")
+    devices_count = cursor.fetchone()['count']
 
     conn.close()
 
-    # Pass counts to the template
-    return render_template('admin/dashboard.html',
-                           courses_count=courses_count,
-                           batches_count=batches_count,
-                           sessions_count=sessions_count,
-                           students_count=students_count)
-
+    return render_template(
+        'admin/dashboard.html',
+        courses_count=courses_count,
+        batches_count=batches_count,
+        sessions_count=sessions_count,
+        students_count=students_count,
+        devices_count=devices_count
+    )
 
 
 @app.route('/batches')
@@ -322,6 +326,61 @@ def student_details(std_id):
     conn.close()
 
     return render_template('admin/student_details.html', student=student)
+@app.route('/admin/devices', methods=['GET'])
+def view_devices():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Fetch all devices
+    cursor.execute("SELECT * FROM device_details")
+    devices = cursor.fetchall()
+    
+    conn.close()
+    return render_template('admin/devices.html', devices=devices)
+
+@app.route('/admin/update_device/<int:device_id>', methods=['GET', 'POST'])
+def update_device(device_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    if request.method == 'POST':
+        # Get updated data from form
+        device_name = request.form['device_name']
+        device_mac = request.form['device_mac']
+        device_status = int(request.form['device_status'])
+        
+        try:
+            cursor.execute(
+                "UPDATE device_details SET device_name = %s, device_mac = %s, device_status = %s WHERE device_id = %s",
+                (device_name, device_mac, device_status, device_id)
+            )
+            conn.commit()
+            flash("Device updated successfully!", "success")
+            return redirect('/admin/devices')
+        except mysql.connector.Error as e:
+            flash(f"Error updating device: {str(e)}", "danger")
+    
+    # Fetch the current device details
+    cursor.execute("SELECT * FROM device_details WHERE device_id = %s", (device_id,))
+    device = cursor.fetchone()
+    
+    conn.close()
+    return render_template('admin/update_device.html', device=device)
+
+@app.route('/admin/delete_device/<int:device_id>', methods=['GET'])
+def delete_device(device_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("DELETE FROM device_details WHERE device_id = %s", (device_id,))
+        conn.commit()
+        flash("Device deleted successfully!", "success")
+    except mysql.connector.Error as e:
+        flash(f"Error deleting device: {str(e)}", "danger")
+    
+    conn.close()
+    return redirect('/admin/devices')
 
 
 
