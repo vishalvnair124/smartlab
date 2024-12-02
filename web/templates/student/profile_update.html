@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Profile</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+</head>
+<body>
+  <div class="profile-container">
+    <header class="profile-header">
+      <h1>Update Profile</h1>
+    </header>
+    <main class="profile-details">
+      <!-- Use action instead of href -->
+      <form action="{{ url_for('update_profile') }}" method="POST">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" value="{{ student['name'] }}" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" value="{{ student['email'] }}" required>
+
+        <label for="device">Device:</label>
+        <input type="text" id="device" name="device" value="{{ student['device'] }}" required>
+
+        <label for="session">Session:</label>
+        <input type="text" id="session" name="session" value="{{ student['session'] }}" required>
+
+        <label for="courses">Courses (comma-separated):</label>
+        <textarea id="courses" name="courses" required>{{ ", ".join(student['courses']) }}</textarea>
+
+        <button type="submit" class="btn">Save Changes</button>
+        <a href="{{ url_for('profile') }}" class="btn">Cancel</a>
+      </form>
+    </main>
+  </div>
+</body>
+</html>
