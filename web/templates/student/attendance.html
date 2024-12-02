@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance View</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance.css') }}">
+</head>
+<body>
+  <div form action="/attendance" method="post" class="container">
+    <header class="header">
+      <h1>Attendance View</h1>
+    </header>
+    <main>
+      <table>
+        <thead>
+          <tr>
+            <th>Roll Number</th>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>101</td>
+            <td>John Doe</td>
+            <td>2024-12-01</td>
+            <td>Present</td>
+          </tr>
+          <tr>
+            <td>102</td>
+            <td>Jane Smith</td>
+            <td>2024-12-01</td>
+            <td>Absent</td>
+          </tr>
+          <tr>
+            <td>103</td>
+            <td>Samuel Green</td>
+            <td>2024-12-01</td>
+            <td>Present</td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+  </div>
+</body>
+</html>

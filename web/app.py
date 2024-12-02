@@ -9,7 +9,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'smartlab',
+    'database': 'smartlab1',
 }
 
 # Function to connect to the database
@@ -47,13 +47,21 @@ def login():
 
     return render_template('auth/login.html')
 
+#student = register
+@app.route('/register')
+def register():
+    return render_template('auth/register.html')
 
-
+@app.route('/attendance')
+def attendance():
+    # You can add logic here to fetch student-specific attendance details
+    return render_template('student/attendance.html')
 
 # Student dashboard route
 @app.route('/student/dashboard/<int:student_id>')
 def student_dashboard(student_id):
     # Fetch student-specific data if required using the student_id
+    # return render_template('stshboard.hudent/datml', student_id=student_id)
     return render_template('student/dashboard.html', student_id=student_id)
 
 
