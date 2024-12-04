@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Profile</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+</head>
+<body>
+  <div class="profile-container">
+    <header class="profile-header">
+      <img src="static/images/profile_placeholder.png" alt="Profile Picture" class="profile-pic">
+      <h1>{{ student['name'] }}</h1>
+      <p><strong>Email:</strong> {{ student['email'] }}</p>
+      <p><strong>Roll Number:</strong> {{ student['roll_number'] }}</p>
+      <p><strong>Department:</strong> {{ student['department'] }}</p>
+      <p><strong>Device:</strong> {{ student['device'] }}</p>
+      <p><strong>Session:</strong> {{ student['session'] }}</p>
+    </header>
+    <main class="profile-details">
+      <h2>Courses</h2>
+      <ul>
+        {% for course in student['courses'] %}
+          <li>{{ course }}</li>
+        {% endfor %}
+      </ul>
+      <a href="/profile_update" class="btn">Update Profile</a>
+    </main>
+  </div>
+</body>
+</html>

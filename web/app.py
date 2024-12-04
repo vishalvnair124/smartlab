@@ -17,7 +17,7 @@ def get_db_connection():
     return mysql.connector.connect(**db_config)
 
 # Authentication Routes
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
@@ -51,11 +51,41 @@ def login():
 @app.route('/register')
 def register():
     return render_template('auth/register.html')
-
+# attendance
 @app.route('/attendance')
 def attendance():
     # You can add logic here to fetch student-specific attendance details
     return render_template('student/attendance.html')
+# student profile
+# Mock student data
+student_data = {
+    "name": "Alice Johnson",
+    "email": "alice.johnson@example.com",
+    "roll_number": "CS2024001",
+    "department": "Computer Science",
+    "device": "Laptop",
+    "session": "2023-2024",
+    "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
+}
+
+@app.route("/profile")
+def profile():
+    """Render the profile page."""
+    return render_template("/student/profile.html", student=student_data)
+
+# profile updates
+@app.route("/profile_update", methods=["GET", "POST"])
+def update_profile():
+    """Render and process the profile update form."""
+    if request.method == "POST":
+        # Update student data
+        student_data["name"] = request.form["name"]
+        student_data["email"] = request.form["email"]
+        student_data["device"] = request.form["device"]
+        student_data["session"] = request.form["session"]
+        student_data["courses"] = request.form["courses"].split(",")  # Split courses by commas
+        return redirect(url_for("/profile_update"))
+    return render_template("/student/profile_update.html", student=student_data)
 
 # Student dashboard route
 @app.route('/student/dashboard/<int:student_id>')
