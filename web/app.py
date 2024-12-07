@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash,jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
 
 
@@ -78,14 +78,10 @@ def register():
         try:
             # Check if email already exists in the database
             cursor.execute("SELECT * FROM student_details WHERE std_email=%s", (std_email,))
-            if cursor.fetchone():
-                flash('Email is already registered. Please use another email.', 'danger')
-                return redirect('/register')
+            existing_user = cursor.fetchone()
 
-            # Check if roll number already exists in the database
-            cursor.execute("SELECT * FROM student_details WHERE std_rollno=%s", (std_rollno,))
-            if cursor.fetchone():
-                flash('Roll number is already registered. Please use another roll number.', 'danger')
+            if existing_user:
+                flash('Email is already registered. Please use another email.', 'danger')
                 return redirect('/register')
 
             # Insert new user into the database
@@ -96,7 +92,7 @@ def register():
             conn.commit()
 
             flash('Registration successful. Please log in.', 'success')
-            return redirect('/')
+            return redirect('/login')
 
         except mysql.connector.Error as err:
             flash(f'Error: {err}', 'danger')
@@ -104,16 +100,13 @@ def register():
 
         finally:
             conn.close()
-
-    # GET request - render the registration page with batch details
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM batch_details")
-    batches = cursor.fetchall()
+    batches  = cursor.fetchall()
     conn.close()
     
-    return render_template('auth/register.html', batches=batches)
-
+    return render_template('auth/register.html',batches= batches)
 
 # # #! attendance
 # @app.route('/attendance')
@@ -133,7 +126,6 @@ def register():
 # }
 
 
-<<<<<<< HEAD
 @app.route('/student/attendance/<int:student_id>')
 def attendance(a_id):
     conn = get_db_connection()
@@ -168,41 +160,6 @@ def attendance(a_id):
 #     "session": "2023-2024",
 #     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
 # }
-=======
-# #! attendance
-@app.route('/attendance/<int:student_id>', methods=['POST',"GET"])
-def attendance(student_id):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    try:
-        # Fetch attendance records for the specific student_id
-        cursor.execute("""
-            SELECT student_attendance.att_id, 
-                   student_attendance.std_id, 
-                   student_attendance.login_time, 
-                   student_attendance.logout_time,
-                   student_details.std_name
-            FROM student_attendance
-            JOIN student_details ON student_attendance.std_id = student_details.std_id
-            WHERE student_attendance.std_id = %s
-        """, (student_id,))
-        attendance = cursor.fetchall()
-        print(f"Executing query: SELECT ... WHERE student_attendance.std_id = {student_id}")
-        print(jsonify(attendance))
-
-    except Exception as e:
-        # Log the error if something goes wrong
-        print(f"An error occurred: {e}")
-        students = []
-
-    finally:
-        conn.close()
-
-    # Pass the student_id and attendance data to the template
-    return render_template('student/attendance.html',attendance=attendance, student_id=student_id)
-
->>>>>>> 05d58bde2948c5babafc02c70df4452f6e2a39bd
 
 # @app.route("/profile")
 # def profile():
@@ -720,42 +677,5 @@ def view_attendance(s_id):
     )
 
 
- # #! attendance old
-# @app.route('/attendance')
-# def attendance():
-#     # You can add logic here to fetch student-specific attendance details
-#     return render_template('student/attendance.html')
-# # student profile
-# # Mock student data
-# student_data = {
-#     "name": "Alice Johnson",
-#     "email": "alice.johnson@example.com",
-#     "roll_number": "CS2024001",
-#     "department": "Computer Science",
-#     "device": "Laptop",
-#     "session": "2023-2024",
-#     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
-# }
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-    # If it's a POST request, handle attendance (if needed)
-        #  if request.method == 'POST':
-        #     # Logic for handling POST request, such as marking attendance
-        #     # This could be marking login_time, logout_time, etc.
-        #     # Example:
-        #     login_time = request.form['login_time']
-        #     logout_time = request.form['logout_time']
-            
-        #     # Insert attendance record (this is an example)
-        #     cursor.execute("""
-        #         INSERT INTO student_attendance (std_id, login_time, logout_time)
-        #         VALUES (%s, %s, %s)
-        #     """, (student_id, login_time, logout_time))
-        #     conn.commit()
-
-        #     # Redirect back to the same page after POST to prevent form resubmission
-        #     return redirect(url_for('attendance', student_id=student_id))
