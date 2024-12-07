@@ -36,7 +36,7 @@ def send_login(email, password, session):
     mac_add = get_mac_address()
     
     respons = {
-               "response":201,
+               "response":200,
                "session_end":"12-12-12",
                "name" : "John",
                "email" : "vishalvnair124@gmail.com"
@@ -67,7 +67,7 @@ def on_login_click(email_entry, password_entry, session_entry):
     if session == "000000" :
        response = device_registration(email,password)
        if response["response"] == 200:
-           display_registred(response)
+           display_registred()
     else:
         response = send_login(email, password, session)
         if response["response"] == 200:

@@ -190,7 +190,7 @@ def batches():
     
 
 
-@app.route('/create_batch', methods=['GET', 'POST'])
+@app.route('/admin/create_batch', methods=['GET', 'POST'])
 def manage_batches():
     conn = get_db_connection()  # Establish connection
     cursor = conn.cursor(dictionary=True)  # Ensure results are dictionaries
@@ -201,7 +201,7 @@ def manage_batches():
         cursor.execute("INSERT INTO batch_details (bat_name, bat_status) VALUES (%s, %s)", (bat_name, bat_status))
         conn.commit()
         flash("Batch created successfully!", "success")
-        return redirect('/batches')
+        return redirect('/admin/batches')
 
     
 @app.route('/admin/edit_batch/<int:bat_id>', methods=['GET', 'POST'])
@@ -225,7 +225,7 @@ def edit_batch(bat_id):
             flash(f"Error updating batch: {str(e)}", "danger")
         finally:
             conn.close()  # Ensure connection is closed
-        return redirect('/batches')
+        return redirect('/admin/batches')
 
     try:
         # Fetch batch details for editing
@@ -240,7 +240,7 @@ def edit_batch(bat_id):
     return render_template('admin/edit_batch.html', batch=batch)
 
 
-@app.route('/deactivate_batch/<int:bat_id>', methods=['GET'])
+@app.route('/admin/deactivate_batch/<int:bat_id>', methods=['GET'])
 def deactivate_batch(bat_id):
     conn = get_db_connection()  # Establish database connection
     cursor = conn.cursor()
@@ -255,7 +255,7 @@ def deactivate_batch(bat_id):
     finally:
         conn.close()  # Ensure connection is closed
 
-    return redirect('/batches')
+    return redirect('/admin/batches')
 
 
 # Route to display courses and handle course creation
