@@ -52,7 +52,7 @@ def login():
     return render_template('auth/login.html')
 
 
-#!student = register
+# register student
 @app.route('/register')
 def register():
     conn = get_db_connection()
@@ -146,7 +146,7 @@ def register():
 
 
 
-# Admin dashboard route
+# Admin dashboard 
 @app.route('/admin/dashboard')
 def admin_dashboard():
     conn = get_db_connection()
@@ -259,7 +259,7 @@ def deactivate_batch(bat_id):
     return redirect('/admin/batches')
 
 
-# Route to display courses and handle course creation
+# courses
 @app.route('/admin/courses', methods=['GET', 'POST'])
 def courses():
     conn = get_db_connection()  # Establish connection
@@ -355,6 +355,7 @@ def deactivate_course(course_id):
 
     return redirect('/admin/courses')
 
+# admin students
 @app.route('/admin/students', methods=['GET'])
 def students():
     conn = get_db_connection()
@@ -405,6 +406,7 @@ def student_details(std_id):
     conn.close()
     return render_template('admin/student_details.html', student=student)
 
+#devices
 @app.route('/admin/devices', methods=['GET'])
 def view_devices():
     conn = get_db_connection()
@@ -461,6 +463,7 @@ def delete_device(device_id):
     conn.close()
     return redirect('/admin/devices')
 
+#sessions
 @app.route('/admin/session/create', methods=['GET', 'POST'])
 def create_session():
     conn = get_db_connection()
