@@ -348,7 +348,7 @@ def deactivate_course(course_id):
 
     return redirect('/admin/courses')
 
-@app.route('/students', methods=['GET'])
+@app.route('/admin/students', methods=['GET'])
 def students():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -365,7 +365,7 @@ def students():
     conn.close()
     return render_template('admin/students.html', students=students)
 
-@app.route('/student_details/<int:std_id>', methods=['GET', 'POST'])
+@app.route('/admin/student_details/<int:std_id>', methods=['GET', 'POST'])
 def student_details(std_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -380,7 +380,7 @@ def student_details(std_id):
                            (new_status, std_id))
             conn.commit()
             flash(f"Student {'activated' if action == 'activate' else 'deactivated'} successfully!", "success")
-            return redirect('/students')
+            return redirect('/admin/students')
         except mysql.connector.Error as e:
             flash(f"Error updating student status: {str(e)}", "danger")
 
