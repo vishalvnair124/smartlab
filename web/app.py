@@ -53,15 +53,67 @@ def login():
 
 
 # register student
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def register():
+    if request.method == 'POST':
+        # Collect form data
+        std_rollno = request.form.get('std_rollno', '').strip()
+        batch_id = request.form.get('bat_id', '').strip()
+        std_email = request.form.get('std_email', '').strip()
+        password = request.form.get('std_passwd', '').strip()
+        confirm_password = request.form.get('confirm-password', '').strip()
+
+        # Input validation
+        if not std_rollno or not batch_id or not std_email or not password or not confirm_password:
+            flash('All fields are required.', 'danger')
+            return redirect('/register')
+
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return redirect('/register')
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        try:
+            # Check if email already exists in the database
+            cursor.execute("SELECT * FROM student_details WHERE std_email=%s", (std_email,))
+            if cursor.fetchone():
+                flash('Email is already registered. Please use another email.', 'danger')
+                return redirect('/register')
+
+            # Check if roll number already exists in the database
+            cursor.execute("SELECT * FROM student_details WHERE std_rollno=%s", (std_rollno,))
+            if cursor.fetchone():
+                flash('Roll number is already registered. Please use another roll number.', 'danger')
+                return redirect('/register')
+
+            # Insert new user into the database
+            cursor.execute("""
+                INSERT INTO student_details (std_rollno, bat_id, std_email, std_passwd)
+                VALUES (%s, %s, %s, %s)
+            """, (std_rollno, batch_id, std_email, password))
+            conn.commit()
+
+            flash('Registration successful. Please log in.', 'success')
+            return redirect('/')
+
+        except mysql.connector.Error as err:
+            flash(f'Error: {err}', 'danger')
+            return redirect('/register')
+
+        finally:
+            conn.close()
+
+    # GET request - render the registration page with batch details
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM batch_details")
-    batches  = cursor.fetchall()
+    batches = cursor.fetchall()
     conn.close()
     
-    return render_template('auth/register.html',batches= batches)
+    return render_template('auth/register.html', batches=batches)
+
 
 # # #! attendance
 # @app.route('/attendance')
@@ -81,29 +133,29 @@ def register():
 # }
 
 
-# @app.route('/student/attendance/<int:student_id>')
-# def attendance(a_id):
-#     conn = get_db_connection()
-#     cursor = conn.cursor(dictionary=True)
+@app.route('/student/attendance/<int:student_id>')
+def attendance(a_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
     
-#      # Get session details along with course and batch details
-#     cursor.execute("""
-#         SELECT 
-#             s.s_id, 
-#             s.s_date, 
-#             s.s_start_time,
-#             s.s_end_time,
-#             c.course_name, 
-#             b.bat_name 
-#         FROM session_details s
-#         JOIN course_details c ON s.course_id = c.course_id
-#         JOIN batch_details b ON c.bat_id = b.bat_id
-#         WHERE s.s_id = %s
-#     """, (s_id,))
-#     session_details = cursor.fetchone()
+     # Get session details along with course and batch details
+    cursor.execute("""
+        SELECT 
+            s.s_id, 
+            s.s_date, 
+            s.s_start_time,
+            s.s_end_time,
+            c.course_name, 
+            b.bat_name 
+        FROM session_details s
+        JOIN course_details c ON s.course_id = c.course_id
+        JOIN batch_details b ON c.bat_id = b.bat_id
+        WHERE s.s_id = %s
+    """, (s_id,))
+    session_details = cursor.fetchone()
     
-#     # You can add logic here to fetch student-specific attendance details
-#     return render_template('student/attendance.html')
+    # You can add logic here to fetch student-specific attendance details
+    return render_template('student/attendance.html')
 # # student profile
 # # Mock student data
 # student_data = {
@@ -136,12 +188,12 @@ def register():
 #     return render_template("/student/profile_update.html", student=student_data)
 
 
-# # Student dashboard route
-# @app.route('/student/dashboard/<int:student_id>')
-# def student_dashboard(student_id):
-#     # Fetch student-specific data if required using the student_id
-#     # return render_template('stshboard.hudent/datml', student_id=student_id)
-#     return render_template('student/dashboard.html', student_id=student_id)
+# Student dashboard route
+@app.route('/student/dashboard/<int:student_id>')
+def student_dashboard(student_id):
+    # Fetch student-specific data if required using the student_id
+    # return render_template('stshboard.hudent/datml', student_id=student_id)
+    return render_template('student/dashboard.html', student_id=student_id)
 
 
 

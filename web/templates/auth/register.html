@@ -1,45 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- css link -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Page</title>
+    <title>Register</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <div class="container">
-    <div class="form-box">
-      <h1 class="head">Register</h1>
-      <form action="/register" method="post">
-        <div class="form-group">
-          <label for="adminssion_no">Admission Number</label>
-          <input type="text" id="username" name="admission_no" placeholder="Enter your Admission Number" required>
+    <div class="container">
+        <div class="form-box">
+            <h1>Register</h1>
+            <!-- Display flashed messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flashes">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <form action="/register" method="POST" autocomplete="off">
+                <label for="std_rollno">Roll Number:</label>
+                <input type="text" name="std_rollno" placeholder="Enter your roll number" required>
+                
+                <label for="bat_id">Select Batch:</label>
+                <select name="bat_id" required>
+                    <option value="">Select a batch</option>
+                    {% for batch in batches %}
+                    <option value="{{ batch['bat_id'] }}">{{ batch['bat_name'] }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="std_email">Email:</label>
+                <input type="email" name="std_email" placeholder="Enter your email" required >
+                
+                <label for="std_passwd">Password:</label>
+                <input type="password" name="std_passwd" placeholder="Enter your password" required>
+                
+                <label for="confirm-password">Confirm Password:</label>
+                <input type="password" name="confirm-password" placeholder="Confirm your password" required>
+
+                <button type="submit" class="btn">Register</button>
+            </form>
         </div>
-        <div class="form-group">
-          <label for="bat_id" class="form-label">Select Batch</label>
-          <select class="form-control" id="bat_id" name="bat_id" required>
-            <option value="">Select a Batch</option>
-            {% for batch in batches %}
-            <option value="{{ batch.bat_id }}">{{ batch.bat_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" placeholder="Enter your email" required>
-        </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="Enter your password" required>
-        </div>
-        <div class="form-group">
-          <label for="confirm-password">Confirm Password</label>
-          <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" required>
-        </div>
-        <button type="submit" class="btn">Register</button>
-      </form>
     </div>
-  </div>
 </body>
 </html>
