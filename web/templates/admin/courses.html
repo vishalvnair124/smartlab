@@ -37,7 +37,7 @@
       <!-- Create New Course Form -->
       <div class="form-section">
         <h4>Create New Course</h4>
-        <form action="/courses" method="POST" class="row g-3">
+        <form action="/admin/courses" method="POST" class="row g-3">
           <div class="col-md-12">
             <label for="courseName" class="form-label">Course Name</label>
             <input
@@ -97,12 +97,12 @@
               </td>
               <td>
                 <a
-                  href="/edit_course/{{ course.course_id }}"
+                  href="/admin/edit_course/{{ course.course_id }}"
                   class="btn btn-warning btn-sm"
                   >Edit</a
                 >
                 <a
-                  href="/deactivate_course/{{ course.course_id }}"
+                  href="/admin/deactivate_course/{{ course.course_id }}"
                   class="btn btn-danger btn-sm"
                   >Deactivate</a
                 >
