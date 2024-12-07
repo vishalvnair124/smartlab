@@ -17,42 +17,47 @@ db_config = {
 def get_db_connection():
     return mysql.connector.connect(**db_config)
 
-# Authentication Routes
+#! Authentication Routes 
+# login
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        conn = get_db_connection()
+        
+        conn = get_db_connection()  # Open connection once
         cursor = conn.cursor(dictionary=True)
 
-        # Check if the user is an admin
-        cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
-        admin = cursor.fetchone()
+        try:
+            # Check if the user is an admin
+            cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
+            admin = cursor.fetchone()
 
-        if admin:
-            conn.close()
-            return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
+            if admin:
+                return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
-        # Check if the user is a student
-        cursor.execute("SELECT * FROM student_details WHERE std_email=%s AND std_passwd=%s", (email, password))
-        student = cursor.fetchone()
-        conn.close()
+            # Check if the user is a student
+            cursor.execute("SELECT * FROM student_details WHERE std_email=%s AND std_passwd=%s", (email, password))
+            student = cursor.fetchone()
 
-        if student:
-            # Redirect to the student dashboard
-            return redirect(url_for('student_dashboard', student_id=student['std_id']))
+            if student:  # Redirect to the student dashboard
+                return redirect(url_for('student_dashboard', student_id=student['std_id']))
 
-        # Invalid credentials
-        flash('Invalid email or password', 'danger')
+            # Invalid credentials
+            flash('Invalid email or password', 'danger')
+
+        finally:
+            conn.close()  # Ensure that the connection is closed after both queries
 
     return render_template('auth/login.html')
 
-#student = register
+
+#!student = register
 @app.route('/register')
 def register():
     return render_template('auth/register.html')
-# attendance
+
+# #! attendance
 @app.route('/attendance')
 def attendance():
     # You can add logic here to fetch student-specific attendance details
@@ -68,6 +73,44 @@ student_data = {
     "session": "2023-2024",
     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
 }
+
+
+# @app.route('/student/attendance/<int:student_id>')
+# def attendance(a_id):
+#     conn = get_db_connection()
+#     cursor = conn.cursor(dictionary=True)
+    
+#      # Get session details along with course and batch details
+#     cursor.execute("""
+#         SELECT 
+#             s.s_id, 
+#             s.s_date, 
+#             s.s_start_time,
+#             s.s_end_time,
+#             c.course_name, 
+#             b.bat_name 
+#         FROM session_details s
+#         JOIN course_details c ON s.course_id = c.course_id
+#         JOIN batch_details b ON c.bat_id = b.bat_id
+#         WHERE s.s_id = %s
+#     """, (s_id,))
+#     session_details = cursor.fetchone()
+    
+#     # You can add logic here to fetch student-specific attendance details
+#     return render_template('student/attendance.html')
+# # student profile
+# # Mock student data
+# student_data = {
+#     "name": "Alice Johnson",
+#     "email": "alice.johnson@example.com",
+#     "roll_number": "CS2024001",
+#     "department": "Computer Science",
+#     "device": "Laptop",
+#     "session": "2023-2024",
+#     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
+# }
+
+
 
 @app.route("/profile")
 def profile():
@@ -209,8 +252,6 @@ def deactivate_batch(bat_id):
     return redirect('/batches')
 
 
-
-
 # Route to display courses and handle course creation
 @app.route('/admin/courses', methods=['GET', 'POST'])
 def courses():
@@ -231,8 +272,7 @@ def courses():
             flash("Course created successfully!", "success")
         except mysql.connector.Error as e:
             flash(f"Error creating course: {str(e)}", "danger")
-        finally:
-            conn.close()
+        
 
     # Fetch all courses with batch names (JOIN query)
     cursor.execute("""
@@ -308,7 +348,7 @@ def deactivate_course(course_id):
 
     return redirect('/admin/courses')
 
-@app.route('/students', methods=['GET'])
+@app.route('/admin/students', methods=['GET'])
 def students():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -325,7 +365,7 @@ def students():
     conn.close()
     return render_template('admin/students.html', students=students)
 
-@app.route('/student_details/<int:std_id>', methods=['GET', 'POST'])
+@app.route('/admin/student_details/<int:std_id>', methods=['GET', 'POST'])
 def student_details(std_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -340,7 +380,7 @@ def student_details(std_id):
                            (new_status, std_id))
             conn.commit()
             flash(f"Student {'activated' if action == 'activate' else 'deactivated'} successfully!", "success")
-            return redirect('/students')
+            return redirect('/admin/students')
         except mysql.connector.Error as e:
             flash(f"Error updating student status: {str(e)}", "danger")
 
@@ -356,8 +396,8 @@ def student_details(std_id):
     student = cursor.fetchone()
 
     conn.close()
-
     return render_template('admin/student_details.html', student=student)
+
 @app.route('/admin/devices', methods=['GET'])
 def view_devices():
     conn = get_db_connection()
@@ -453,6 +493,7 @@ def create_session():
 
     conn.close()
     return render_template('admin/session_create.html', courses=courses)
+
 @app.route('/admin/sessions', methods=['GET'])
 def sessions():
     conn = get_db_connection()
@@ -474,6 +515,7 @@ def sessions():
     
     conn.close()
     return render_template('admin/sessions.html', sessions=sessions)
+
 @app.route('/admin/session/<int:session_id>/edit', methods=['GET', 'POST'])
 def edit_session(session_id):
     conn = get_db_connection()
@@ -508,6 +550,7 @@ def edit_session(session_id):
 
     conn.close()
     return render_template('admin/session_edit.html', session=session, courses=courses)
+
 @app.route('/admin/session/<int:session_id>/delete', methods=['POST'])
 def delete_session(session_id):
     conn = get_db_connection()
