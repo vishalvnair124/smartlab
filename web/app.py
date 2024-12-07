@@ -272,8 +272,7 @@ def courses():
             flash("Course created successfully!", "success")
         except mysql.connector.Error as e:
             flash(f"Error creating course: {str(e)}", "danger")
-        finally:
-            conn.close()
+        
 
     # Fetch all courses with batch names (JOIN query)
     cursor.execute("""
