@@ -1,3 +1,8 @@
+# login time
+# logout time
+
+# get  attendance
+
 @app.route('/admin/session/<int:s_id>/attendance')
 def view_attendance(s_id):
     conn = get_db_connection()

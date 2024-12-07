@@ -23,30 +23,33 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        conn = get_db_connection()
+        
+        conn = get_db_connection()  # Open connection once
         cursor = conn.cursor(dictionary=True)
 
-        # Check if the user is an admin
-        cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
-        admin = cursor.fetchone()
-        conn.close() # fixed route redirect for admin
-        
-        if admin:
-            return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
+        try:
+            # Check if the user is an admin
+            cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
+            admin = cursor.fetchone()
 
-        # Check if the user is a student
-        cursor.execute("SELECT * FROM student_details WHERE std_email=%s AND std_passwd=%s", (email, password))
-        student = cursor.fetchone()
-        conn.close()
+            if admin:
+                return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
-        if student:
-            # Redirect to the student dashboard
-            return redirect(url_for('student_dashboard', student_id=student['std_id']))
+            # Check if the user is a student
+            cursor.execute("SELECT * FROM student_details WHERE std_email=%s AND std_passwd=%s", (email, password))
+            student = cursor.fetchone()
 
-        # Invalid credentials
-        flash('Invalid email or password', 'danger')
+            if student:  # Redirect to the student dashboard
+                return redirect(url_for('student_dashboard', student_id=student['std_id']))
+
+            # Invalid credentials
+            flash('Invalid email or password', 'danger')
+
+        finally:
+            conn.close()  # Ensure that the connection is closed after both queries
 
     return render_template('auth/login.html')
+
 
 #!student = register
 @app.route('/register')
@@ -55,7 +58,7 @@ def register():
 
 # #! attendance
 @app.route('/attendance')
-def attendance(a_id):
+def attendance():
     # You can add logic here to fetch student-specific attendance details
     return render_template('student/attendance.html')
 # student profile
@@ -69,6 +72,7 @@ student_data = {
     "session": "2023-2024",
     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
 }
+
 
 # @app.route('/student/attendance/<int:student_id>')
 # def attendance(a_id):
