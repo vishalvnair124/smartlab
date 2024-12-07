@@ -63,6 +63,24 @@ def register():
     
     return render_template('auth/register.html',batches= batches)
 
+# # #! attendance
+# @app.route('/attendance')
+# def attendance():
+#     # You can add logic here to fetch student-specific attendance details
+#     return render_template('student/attendance.html')
+# # student profile
+# # Mock student data
+# student_data = {
+#     "name": "Alice Johnson",
+#     "email": "alice.johnson@example.com",
+#     "roll_number": "CS2024001",
+#     "department": "Computer Science",
+#     "device": "Laptop",
+#     "session": "2023-2024",
+#     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
+# }
+
+
 # #! attendance
 @app.route('/attendance/<int:student_id>', methods=['POST',"GET"])
 def attendance(student_id):
@@ -84,24 +102,6 @@ def attendance(student_id):
         attendance = cursor.fetchall()
         print(f"Executing query: SELECT ... WHERE student_attendance.std_id = {student_id}")
         print(jsonify(attendance))
-     
-# # #! attendance
-# @app.route('/attendance')
-# def attendance():
-#     # You can add logic here to fetch student-specific attendance details
-#     return render_template('student/attendance.html')
-# # student profile
-# # Mock student data
-# student_data = {
-#     "name": "Alice Johnson",
-#     "email": "alice.johnson@example.com",
-#     "roll_number": "CS2024001",
-#     "department": "Computer Science",
-#     "device": "Laptop",
-#     "session": "2023-2024",
-#     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
-# }
-
 
     except Exception as e:
         # Log the error if something goes wrong
@@ -135,12 +135,12 @@ def attendance(student_id):
 #     return render_template("/student/profile_update.html", student=student_data)
 
 
-# # Student dashboard route
-# @app.route('/student/dashboard/<int:student_id>')
-# def student_dashboard(student_id):
-#     # Fetch student-specific data if required using the student_id
-#     # return render_template('stshboard.hudent/datml', student_id=student_id)
-#     return render_template('student/dashboard.html', student_id=student_id)
+# Student dashboard route
+@app.route('/student/dashboard/<int:student_id>')
+def student_dashboard(student_id):
+    # Fetch student-specific data if required using the student_id
+    # return render_template('stshboard.hudent/datml', student_id=student_id)
+    return render_template('student/dashboard.html', student_id=student_id)
 
 
 
