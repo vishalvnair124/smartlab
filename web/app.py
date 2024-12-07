@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
 
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
@@ -172,7 +173,7 @@ def admin_dashboard():
     )
 
 
-@app.route('/batches')
+@app.route('/admin/batches')
 def batches():
     # Fetch all batches
     conn = get_db_connection()  # Establish connection
@@ -197,7 +198,7 @@ def manage_batches():
         return redirect('/batches')
 
     
-@app.route('/edit_batch/<int:bat_id>', methods=['GET', 'POST'])
+@app.route('/admin/edit_batch/<int:bat_id>', methods=['GET', 'POST'])
 def edit_batch(bat_id):
     conn = get_db_connection()  # Establish database connection
     cursor = conn.cursor(dictionary=True)  # Use dictionary cursor for ease of access
@@ -252,7 +253,7 @@ def deactivate_batch(bat_id):
 
 
 # Route to display courses and handle course creation
-@app.route('/courses', methods=['GET', 'POST'])
+@app.route('/admin/courses', methods=['GET', 'POST'])
 def courses():
     conn = get_db_connection()  # Establish connection
     cursor = conn.cursor(dictionary=True)  # Use dictionary cursor for ease of access
@@ -294,7 +295,7 @@ def courses():
 
 
 # Route to edit a course
-@app.route('/edit_course/<int:course_id>', methods=['GET', 'POST'])
+@app.route('/admin/edit_course/<int:course_id>', methods=['GET', 'POST'])
 def edit_course(course_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -313,7 +314,7 @@ def edit_course(course_id):
             """, (course_name, bat_id, course_status, course_id))
             conn.commit()
             flash("Course updated successfully!", "success")
-            return redirect('/courses')
+            return redirect('/admin/courses')
         except mysql.connector.Error as e:
             flash(f"Error updating course: {str(e)}", "danger")
     
@@ -332,7 +333,7 @@ def edit_course(course_id):
 
 
 # Route to deactivate a course
-@app.route('/deactivate_course/<int:course_id>', methods=['GET'])
+@app.route('/admin/deactivate_course/<int:course_id>', methods=['GET'])
 def deactivate_course(course_id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -346,7 +347,7 @@ def deactivate_course(course_id):
     finally:
         conn.close()
 
-    return redirect('/courses')
+    return redirect('/admin/courses')
 
 @app.route('/students', methods=['GET'])
 def students():
