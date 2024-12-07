@@ -2,11 +2,15 @@ from customtkinter import *
 from PIL import Image
 import uuid
 
+
+
 # Initialize Application
 app = CTk()
 app.geometry("600x480")
 app.iconbitmap("./attendance.ico")
 app.title("SmartLab")
+
+invalid_var = BooleanVar(value=False) 
 
 # Load Images
 side_img_data = Image.open("side-img.png")
@@ -32,7 +36,7 @@ def send_login(email, password, session):
     mac_add = get_mac_address()
     
     respons = {
-               "response":200,
+               "response":201,
                "session_end":"12-12-12",
                "name" : "John",
                "email" : "vishalvnair124@gmail.com"
@@ -69,7 +73,8 @@ def on_login_click(email_entry, password_entry, session_entry):
         if response["response"] == 200:
             display_logedin(response)
         else:
-            logout()
+            invalid_var.set(True)
+            display_login_form()
 
 def display_registred():
     for widget in right_panel.winfo_children():
@@ -123,6 +128,8 @@ def display_logedin(response):
 
 def display_login_form():
     # Create entry widgets and store them locally
+    for widget in right_panel.winfo_children():
+        widget.destroy()
     email_entry = CTkEntry(master=right_panel, width=225, fg_color="#EEEEEE", border_color="#601E88", border_width=1, text_color="#000000")
     password_entry = CTkEntry(master=right_panel, width=225, fg_color="#EEEEEE", border_color="#601E88", border_width=1, text_color="#000000", show="*")
     session_entry = CTkEntry(master=right_panel, width=225, fg_color="#EEEEEE", border_color="#601E88", border_width=1, text_color="#000000")
@@ -148,6 +155,12 @@ def display_login_form():
         width=225,
         command=lambda: on_login_click(email_entry, password_entry, session_entry)  # Use lambda to pass the entry widgets
     ).pack(anchor="w", pady=(40, 0), padx=(25, 0))
+
+    label = CTkLabel(master=right_panel, text="Invalid credintial",anchor="w", justify="left", text_color="#601E88",font=("Arial Bold", 15,))
+    if invalid_var.get() :
+        label.pack(anchor="w",pady=(10,0),padx=(75, 0))
+    else :
+        label.pack_forget()
 
 # Left Panel 
 left_panel = CTkFrame(master=app, width=300, height=480, fg_color="black")
