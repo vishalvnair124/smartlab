@@ -55,7 +55,13 @@ def login():
 #!student = register
 @app.route('/register')
 def register():
-    return render_template('auth/register.html')
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM batch_details")
+    batches  = cursor.fetchall()
+    conn.close()
+    
+    return render_template('auth/register.html',batches= batches)
 
 # #! attendance
 @app.route('/attendance')
