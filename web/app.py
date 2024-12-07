@@ -116,8 +116,6 @@ def register():
 #     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
 # }
 
-
-
 # @app.route("/profile")
 # def profile():
 #     """Render the profile page."""
