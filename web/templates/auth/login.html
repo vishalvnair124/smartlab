@@ -10,13 +10,14 @@
       rel="stylesheet"
     />
     <style>
-      body {
-        background-color: #f8f9fa;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-      }
+body {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(120deg, #3498db, #8e44ad);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
       .login-card {
         padding: 2rem;
         background: white;
@@ -28,7 +29,7 @@
   <body>
     <div class="login-card">
       <h2 class="text-center mb-4">Login</h2>
-      <form method="POST" action="/login">
+      <form method="POST" action="/">
         <div class="mb-3">
           <label for="email" class="form-label">Email address</label>
           <input
