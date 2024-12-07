@@ -1,5 +1,6 @@
 from customtkinter import *
 from PIL import Image
+import uuid
 
 # Initialize Application
 app = CTk()
@@ -18,52 +19,124 @@ email_icon = CTkImage(dark_image=email_icon_data, light_image=email_icon_data, s
 password_icon = CTkImage(dark_image=password_icon_data, light_image=password_icon_data, size=(17, 17))
 session_icon = CTkImage(dark_image=session_icon_data, light_image=session_icon_data, size=(17, 17))
 
+def get_mac_address():
+    try:
+        mac_address = hex(uuid.getnode()).replace("0x", "").zfill(12)
+        formatted_mac = ":".join(mac_address[i:i+2] for i in range(0, len(mac_address), 2))
+        return formatted_mac
+    except Exception as e:
+        return f"Error: {e}"
+
+def send_login(email, password, session):
+    # Get Email and Password from Entry Fields
+    mac_add = get_mac_address()
+    
+    respons = {
+               "response":200,
+               "session_end":"12-12-12",
+               "name" : "John",
+               "email" : "vishalvnair124@gmail.com"
+              }
+    return respons
+
+def send_logout(response_from):
+    print("Logout Request Send",response_from)
+    respons = {
+               "response":200
+              }
+    return respons
+
+def device_registration(email,password):
+    mac_add = get_mac_address()
+    print(email,password,mac_add)
+    response = {
+               "response":200
+              }
+    return response
+
 # Function to Replace the Right Frame
-def on_login_click():
+def on_login_click(email_entry, password_entry, session_entry):
+    email = email_entry.get()  # Get the email value from the entry widget
+    password = password_entry.get()  # Get the password value from the entry widget
+    session = session_entry.get()  # Get the session value from the entry widget
+    
+    if session == "000000" :
+       response = device_registration(email,password)
+       if response["response"] == 200:
+           display_registred(response)
+    else:
+        response = send_login(email, password, session)
+        if response["response"] == 200:
+            display_logedin(response)
+        else:
+            logout()
+
+def display_registred():
     for widget in right_panel.winfo_children():
         widget.destroy()
-
-   
     CTkLabel(
-        master=right_panel,
-        text="Dashboard",
-        font=("Arial Bold", 24),
-        text_color="#601E88"
-    ).pack(pady=50)
+            master=right_panel,
+            text="Dashboard",
+            font=("Arial Bold", 24),
+            text_color="#601E88"
+        ).pack(pady=50)
 
     CTkLabel(
-        master=right_panel,
-        text="Welcome to the Dashboard!",
-        font=("Arial", 16),
-        text_color="#601E88"
-    ).pack(pady=10)
+            master=right_panel,
+            text="Device Registred",
+            font=("Arial", 16),
+            text_color="#601E88",
+            anchor="center"
+        ).pack(pady=10)
+    
+def logout(response_from):
+    response = send_logout(response_from)
+    if response["response"] == 200:
+        for widget in right_panel.winfo_children():
+            widget.destroy()
+        display_login_form()
 
+def display_logedin(response):
+    for widget in right_panel.winfo_children():
+        widget.destroy()
+    CTkLabel(
+            master=right_panel,
+            text="Dashboard",
+            font=("Arial Bold", 24),
+            text_color="#601E88"
+        ).pack(pady=50)
+    CTkLabel(
+            master=right_panel,
+            text=f"Welcome {response["name"]}!".format(),
+            font=("Arial", 16),
+            text_color="#601E88",
+            anchor="center"
+        ).pack(pady=10)
     CTkButton(
-        master=right_panel,
-        text="Logout",
-        fg_color="#E44982",
-        hover_color="#601E88",
-        text_color="white",
-        command=logout
-    ).pack(pady=20)
-
-
-def logout():
-    for widget in right_panel.winfo_children():
-        widget.destroy()
-    display_login_form()
+            master=right_panel,
+            text="Logout",
+            fg_color="#E44982",
+            hover_color="#601E88",
+            text_color="white",
+            command= lambda :logout(response)
+        ).pack(pady=20)
 
 def display_login_form():
+    # Create entry widgets and store them locally
+    email_entry = CTkEntry(master=right_panel, width=225, fg_color="#EEEEEE", border_color="#601E88", border_width=1, text_color="#000000")
+    password_entry = CTkEntry(master=right_panel, width=225, fg_color="#EEEEEE", border_color="#601E88", border_width=1, text_color="#000000", show="*")
+    session_entry = CTkEntry(master=right_panel, width=225, fg_color="#EEEEEE", border_color="#601E88", border_width=1, text_color="#000000")
+    
     CTkLabel(master=right_panel, text="Welcome Back!", text_color="#601E88", anchor="w", justify="left", font=("Arial Bold", 24)).pack(anchor="w", pady=(50, 5), padx=(25, 0))
 
     CTkLabel(master=right_panel, text="  Email", text_color="#601E88", anchor="w", justify="left", font=("Arial Bold", 14), image=email_icon, compound="left").pack(anchor="w", pady=(38, 0), padx=(25, 0))
-    CTkEntry(master=right_panel, width=225, fg_color="#EEEEEE", border_color="#601E88", border_width=1, text_color="#000000").pack(anchor="w", padx=(25, 0))
+    email_entry.pack(anchor="w", padx=(25, 0))
 
     CTkLabel(master=right_panel, text="  Password", text_color="#601E88", anchor="w", justify="left", font=("Arial Bold", 14), image=password_icon, compound="left").pack(anchor="w", pady=(21, 0), padx=(25, 0))
-    CTkEntry(master=right_panel, width=225, fg_color="#EEEEEE", border_color="#601E88", border_width=1, text_color="#000000", show="*").pack(anchor="w", padx=(25, 0))
+    password_entry.pack(anchor="w", padx=(25, 0))
 
     CTkLabel(master=right_panel, text="  Session", text_color="#601E88", anchor="w", justify="left", font=("Arial Bold", 14), image=session_icon, compound="left").pack(anchor="w", pady=(21, 0), padx=(25, 0))
-    CTkEntry(master=right_panel, width=225, fg_color="#EEEEEE", border_color="#601E88", border_width=1, text_color="#000000").pack(anchor="w", padx=(25, 0))
+    session_entry.pack(anchor="w", padx=(25, 0))
 
     CTkButton(
         master=right_panel,
@@ -73,7 +146,7 @@ def display_login_form():
         font=("Arial Bold", 12),
         text_color="#ffffff",
         width=225,
-        command=on_login_click  # Attach the login function here
+        command=lambda: on_login_click(email_entry, password_entry, session_entry)  # Use lambda to pass the entry widgets
     ).pack(anchor="w", pady=(40, 0), padx=(25, 0))
 
 # Left Panel 
