@@ -17,7 +17,7 @@ db_config = {
 def get_db_connection():
     return mysql.connector.connect(**db_config)
 
-#! Authentication Routes 
+
 # login
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -52,10 +52,16 @@ def login():
     return render_template('auth/login.html')
 
 
-#!student = register
+# register student
 @app.route('/register')
 def register():
-    return render_template('auth/register.html')
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM batch_details")
+    batches  = cursor.fetchall()
+    conn.close()
+    
+    return render_template('auth/register.html',batches= batches)
 
 # #! attendance
 @app.route('/attendance/<int:student_id>', methods=['POST',"GET"])
@@ -79,6 +85,22 @@ def attendance(student_id):
         print(f"Executing query: SELECT ... WHERE student_attendance.std_id = {student_id}")
         print(jsonify(attendance))
      
+# # #! attendance
+# @app.route('/attendance')
+# def attendance():
+#     # You can add logic here to fetch student-specific attendance details
+#     return render_template('student/attendance.html')
+# # student profile
+# # Mock student data
+# student_data = {
+#     "name": "Alice Johnson",
+#     "email": "alice.johnson@example.com",
+#     "roll_number": "CS2024001",
+#     "department": "Computer Science",
+#     "device": "Laptop",
+#     "session": "2023-2024",
+#     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
+# }
 
 
     except Exception as e:
@@ -93,36 +115,37 @@ def attendance(student_id):
     return render_template('student/attendance.html',attendance=attendance, student_id=student_id)
 
 
+# @app.route("/profile")
+# def profile():
+#     """Render the profile page."""
+#     return render_template("/student/profile.html", student=student_data)
+
+# # profile updates
+# @app.route("/profile_update", methods=["GET", "POST"])
+# def update_profile():
+#     """Render and process the profile update form."""
+#     if request.method == "POST":
+#         # Update student data
+#         student_data["name"] = request.form["name"]
+#         student_data["email"] = request.form["email"]
+#         student_data["device"] = request.form["device"]
+#         student_data["session"] = request.form["session"]
+#         student_data["courses"] = request.form["courses"].split(",")  # Split courses by commas
+#         return redirect(url_for("/profile_update"))
+#     return render_template("/student/profile_update.html", student=student_data)
 
 
-@app.route("/profile")
-def profile():
-    """Render the profile page."""
-    return render_template("/student/profile.html", student=student_data)
-
-# profile updates
-@app.route("/profile_update", methods=["GET", "POST"])
-def update_profile():
-    """Render and process the profile update form."""
-    if request.method == "POST":
-        # Update student data
-        student_data["name"] = request.form["name"]
-        student_data["email"] = request.form["email"]
-        student_data["device"] = request.form["device"]
-        student_data["session"] = request.form["session"]
-        student_data["courses"] = request.form["courses"].split(",")  # Split courses by commas
-        return redirect(url_for("/profile_update"))
-    return render_template("/student/profile_update.html", student=student_data)
-
-# Student dashboard route
-@app.route('/student/dashboard/<int:student_id>')
-def student_dashboard(student_id):
-    # Fetch student-specific data if required using the student_id
-    # return render_template('stshboard.hudent/datml', student_id=student_id)
-    return render_template('student/dashboard.html', student_id=student_id)
+# # Student dashboard route
+# @app.route('/student/dashboard/<int:student_id>')
+# def student_dashboard(student_id):
+#     # Fetch student-specific data if required using the student_id
+#     # return render_template('stshboard.hudent/datml', student_id=student_id)
+#     return render_template('student/dashboard.html', student_id=student_id)
 
 
-# Admin dashboard route
+
+
+# Admin dashboard 
 @app.route('/admin/dashboard')
 def admin_dashboard():
     conn = get_db_connection()
@@ -167,7 +190,7 @@ def batches():
     
 
 
-@app.route('/create_batch', methods=['GET', 'POST'])
+@app.route('/admin/create_batch', methods=['GET', 'POST'])
 def manage_batches():
     conn = get_db_connection()  # Establish connection
     cursor = conn.cursor(dictionary=True)  # Ensure results are dictionaries
@@ -178,7 +201,7 @@ def manage_batches():
         cursor.execute("INSERT INTO batch_details (bat_name, bat_status) VALUES (%s, %s)", (bat_name, bat_status))
         conn.commit()
         flash("Batch created successfully!", "success")
-        return redirect('/batches')
+        return redirect('/admin/batches')
 
     
 @app.route('/admin/edit_batch/<int:bat_id>', methods=['GET', 'POST'])
@@ -202,7 +225,7 @@ def edit_batch(bat_id):
             flash(f"Error updating batch: {str(e)}", "danger")
         finally:
             conn.close()  # Ensure connection is closed
-        return redirect('/batches')
+        return redirect('/admin/batches')
 
     try:
         # Fetch batch details for editing
@@ -217,7 +240,7 @@ def edit_batch(bat_id):
     return render_template('admin/edit_batch.html', batch=batch)
 
 
-@app.route('/deactivate_batch/<int:bat_id>', methods=['GET'])
+@app.route('/admin/deactivate_batch/<int:bat_id>', methods=['GET'])
 def deactivate_batch(bat_id):
     conn = get_db_connection()  # Establish database connection
     cursor = conn.cursor()
@@ -232,10 +255,10 @@ def deactivate_batch(bat_id):
     finally:
         conn.close()  # Ensure connection is closed
 
-    return redirect('/batches')
+    return redirect('/admin/batches')
 
 
-# Route to display courses and handle course creation
+# courses
 @app.route('/admin/courses', methods=['GET', 'POST'])
 def courses():
     conn = get_db_connection()  # Establish connection
@@ -255,8 +278,7 @@ def courses():
             flash("Course created successfully!", "success")
         except mysql.connector.Error as e:
             flash(f"Error creating course: {str(e)}", "danger")
-        finally:
-            conn.close()
+        
 
     # Fetch all courses with batch names (JOIN query)
     cursor.execute("""
@@ -332,7 +354,8 @@ def deactivate_course(course_id):
 
     return redirect('/admin/courses')
 
-@app.route('/students', methods=['GET'])
+# admin students
+@app.route('/admin/students', methods=['GET'])
 def students():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -349,7 +372,7 @@ def students():
     conn.close()
     return render_template('admin/students.html', students=students)
 
-@app.route('/student_details/<int:std_id>', methods=['GET', 'POST'])
+@app.route('/admin/student_details/<int:std_id>', methods=['GET', 'POST'])
 def student_details(std_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -364,7 +387,7 @@ def student_details(std_id):
                            (new_status, std_id))
             conn.commit()
             flash(f"Student {'activated' if action == 'activate' else 'deactivated'} successfully!", "success")
-            return redirect('/students')
+            return redirect('/admin/students')
         except mysql.connector.Error as e:
             flash(f"Error updating student status: {str(e)}", "danger")
 
@@ -382,6 +405,7 @@ def student_details(std_id):
     conn.close()
     return render_template('admin/student_details.html', student=student)
 
+#devices
 @app.route('/admin/devices', methods=['GET'])
 def view_devices():
     conn = get_db_connection()
@@ -438,6 +462,7 @@ def delete_device(device_id):
     conn.close()
     return redirect('/admin/devices')
 
+#sessions
 @app.route('/admin/session/create', methods=['GET', 'POST'])
 def create_session():
     conn = get_db_connection()

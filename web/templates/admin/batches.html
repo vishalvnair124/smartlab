@@ -37,7 +37,7 @@
       <!-- Create New Batch Form -->
       <div class="form-section">
         <h4>Create New Batch</h4>
-        <form action="/create_batch" method="POST" class="row g-3">
+        <form action="/admin/create_batch" method="POST" class="row g-3">
           <div class="col-md-12">
             <label for="batchName" class="form-label">Batch Name</label>
             <input
@@ -84,12 +84,12 @@
               </td>
               <td>
                 <a
-                  href="/edit_batch/{{ batch.bat_id }}"
+                  href="/admin/edit_batch/{{ batch.bat_id }}"
                   class="btn btn-warning btn-sm"
                   >Edit</a
                 >
                 <a
-                  href="/deactivate_batch/{{ batch.bat_id }}"
+                  href="/admin/deactivate_batch/{{ batch.bat_id }}"
                   class="btn btn-danger btn-sm"
                   >Delete</a
                 >

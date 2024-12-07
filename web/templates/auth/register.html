@@ -13,8 +13,17 @@
       <h1 class="head">Register</h1>
       <form action="/register" method="post">
         <div class="form-group">
-          <label for="username">Username</label>
-          <input type="text" id="username" name="username" placeholder="Enter your username" required>
+          <label for="adminssion_no">Admission Number</label>
+          <input type="text" id="username" name="admission_no" placeholder="Enter your Admission Number" required>
+        </div>
+        <div class="form-group">
+          <label for="bat_id" class="form-label">Select Batch</label>
+          <select class="form-control" id="bat_id" name="bat_id" required>
+            <option value="">Select a Batch</option>
+            {% for batch in batches %}
+            <option value="{{ batch.bat_id }}">{{ batch.bat_name }}</option>
+            {% endfor %}
+          </select>
         </div>
         <div class="form-group">
           <label for="email">Email</label>
