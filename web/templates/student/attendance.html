@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance.css') }}">
 </head>
 <body>
-  <div form action="/attendance" method="post" class="container">
+  <div form action="/attendance/{{ student_id }}" method = "POST"  class="container">
     <header class="header">
       <h1>Attendance View</h1>
     </header>
@@ -22,27 +22,25 @@
           </tr>
         </thead>
         <tbody>
+          <h3>Attendance Data: {{ attendance | tojson }}</h3>
+          {% if attendance %}
+          {% for record in attendance %}
+              <tr>
+                  <td>{{ record.att_id }}</td>
+                  <td>{{ record.std_name }}</td>
+                  <td>{{ record.login_time }}</td>
+                  <td>{{ record.logout_time }}</td>
+              </tr>
+          {% endfor %}
+      {% else %}
           <tr>
-            <td>101</td>
-            <td>John Doe</td>
-            <td>2024-12-01</td>
-            <td>Present</td>
+              <td colspan="4" class="text-center">No attendance records found.</td>
           </tr>
-          <tr>
-            <td>102</td>
-            <td>Jane Smith</td>
-            <td>2024-12-01</td>
-            <td>Absent</td>
-          </tr>
-          <tr>
-            <td>103</td>
-            <td>Samuel Green</td>
-            <td>2024-12-01</td>
-            <td>Present</td>
-          </tr>
+      {% endif %}
         </tbody>
       </table>
     </main>
   </div>
 </body>
 </html>
+
