@@ -3,6 +3,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
 import mysql.connector
+from datetime import timedelta
 
 
 
@@ -14,7 +15,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'smartlab1',
+    'database': 'smartlab',
 }
 
 # Function to connect to the database
@@ -250,41 +251,64 @@ def reset_password():
 # }
 
 
-@app.route('/student/attendance/<int:student_id>')
+@app.route('/student/dashboard/attendance/<int:student_id>', methods=['GET'])
 def attendance(student_id):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-     # Get session details along with course and batch details
-    cursor.execute("""
-        SELECT 
-            s.s_id, 
-            s.s_date, 
-            s.s_start_time,
-            s.s_end_time,
-            c.course_name, 
-            b.bat_name 
-        FROM session_details s
-        JOIN course_details c ON s.course_id = c.course_id
-        JOIN batch_details b ON c.bat_id = b.bat_id
-        WHERE s.s_id = %s
-    """, (student_id,student_id))
-    session_details = cursor.fetchone()
-    
-    # You can add logic here to fetch student-specific attendance details
-    return render_template('student/attendance.html',attendance=session_details)
+    if 'user_type' not in session or session['user_type'] != 'student' or session.get('student_id') != student_id:
+        # If the user is not logged in or the session does not match the student ID
+        flash('You must be logged in as a student to access the dashboard.', 'error')
+        return redirect("/")  # Redirect to login page if not logged in as a student
+    try:
+        # Establish a database connection using context manager
+        with get_db_connection() as conn:
+            cursor = conn.cursor(dictionary=True)
+            
+            # Correct the SQL query by removing the redundant column
+            query = '''
+            SELECT 
+                sa.*, 
+                sd.std_name,  
+                sd.std_rollno,
+                ss.course_id,
+                ss.make_attendance,
+                ss.s_date,
+                ss.s_start_time,
+                ss.s_end_time,
+                cc.course_name,
+                bb.bat_name
+                
+            FROM student_attendance sa
+            JOIN student_details sd ON sa.std_id = sd.std_id
+            JOIN session_details ss ON sa.s_id = ss.s_id
+            JOIN course_details cc ON ss.course_id = cc.course_id
+            JOIN batch_details bb ON cc.bat_id = bb.bat_id
+            WHERE sa.std_id = %s
+            '''
+            
+            # Execute the query with the provided student_id
+            cursor.execute(query, (student_id,))
+            attendance = cursor.fetchall()  # Fetch all records for the student
+            
+            # Debugging: print the attendance data
+            print("Attendance Data:", attendance)
 
-# # student profile
-# # Mock student data
-# student_data = {
-#     "name": "Alice Johnson",
-#     "email": "alice.johnson@example.com",
-#     "roll_number": "CS2024001",
-#     "department": "Computer Science",
-#     "device": "Laptop",
-#     "session": "2023-2024",
-#     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
-# }
+            if not attendance:
+                # Handle the case when no attendance data is found
+                print("No data found for std_id:", student_id)
+                
+            # Process time fields, if applicable
+            for record in attendance:
+                # If the start time or end time is a timedelta object, convert it
+                if isinstance(record['s_start_time'], timedelta):
+                    record['s_start_time'] = str(record['s_start_time'])  # Or format it as needed
+                if isinstance(record['s_end_time'], timedelta):
+                    record['s_end_time'] = str(record['s_end_time'])  # Or format it as needed
+
+        # Render the template and pass the attendance data
+        return render_template('student/attendance.html', attendance=attendance)
+
+    except Exception as e:
+        print(f"Error fetching attendance data: {e}")
+        return render_template('error.html', message="There was an error fetching attendance data.")
 
 
 
@@ -294,7 +318,7 @@ def student_dashboard(student_id):
     if 'user_type' not in session or session['user_type'] != 'student' or session.get('student_id') != student_id:
         # If the user is not logged in or the session does not match the student ID
         flash('You must be logged in as a student to access the dashboard.', 'error')
-        return redirect(url_for('login'))  # Redirect to login page if not logged in as a student
+        return redirect("/")  # Redirect to login page if not logged in as a student
     # Fetch student-specific data if required using the student_id
     return render_template('student/dashboard.html', student_id=student_id)
 
@@ -306,7 +330,7 @@ def student_dashboard(student_id):
 def admin_dashboard():
     if 'user_type' not in session or session['user_type'] != 'admin':
         flash('You must be logged in as an admin to access this page.', 'error')
-        return redirect(url_for('login'))  # Redirect to the login page if not admin
+        return redirect('/')  # Redirect to the login page if not admin
     
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)

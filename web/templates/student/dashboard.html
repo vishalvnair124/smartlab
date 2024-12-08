@@ -91,10 +91,11 @@
 
     .logout {
       display: flex;
+      align-item:center;
       justify-content: flex-end;
       /* Aligns to the right */
       margin-right: 2rem;
-      /* Optional: Adds some padding from the edge */
+      padding: 0px 20px;
     }
 
     .logout i {
@@ -102,7 +103,7 @@
       cursor: pointer;
       /* Default color */
       transition: color 0.3s ease;
-      padding-bottom: 5rem;
+      padding-bottom: 1rem;
     }
 
     .logout i:hover:active {
@@ -193,6 +194,17 @@
     .flash.fade-out {
       opacity: 0;
     }
+
+    .row_new{
+      display: flex;
+      justify-content: center;
+      }
+    .log_div{
+      display: flex;
+      justify-content: flex-end;
+      
+    }
+    }
   </style>
 </head>
 
@@ -211,16 +223,18 @@
     {% endwith %}
   </div>
   <div class="container dashboard-container">
-    <h1 class="dashboard-title">Student Dashboard</h1>
     {% if session['user_type'] == 'student' %}
-    <h5 class="text-center">Welcome, {{ session['student_name'] }}</h5>
-    {% endif %}
-    <div class="logout">
-      <a href="/logout">
-        <i class="fa-solid fa-right-from-bracket"> </i>
-      </a>
+    <h1 class="dashboard-title">Student Dashboard</h1>
+    <div class ="log_div">
+      <h5 class="text-center">Welcome, {{ session['student_name'] }}</h5>
+      {% endif %}
+      <div class="logout">
+        <a href="/logout">
+          <i class="fa-solid fa-right-from-bracket"> </i>
+        </a>
+      </div>
     </div>
-    <div class="row g-4">
+    <div  class="row g-4 row_new">
       <!-- Courses Box -->
       <div class="col-md-6 col-lg-3">
         <div class="dashboard-card courses text-center">
@@ -233,10 +247,10 @@
       </div>
       <!-- Attendance Box -->
       <div class="col-md-6 col-lg-3">
+        <a href="/student/dashboard/attendance/{{student_id}}" class="card-link">
         <div class="dashboard-card students text-center">
           <div class="card-icon mb-2"><img class="img-fluid attendance-img"
               src="https://cdn-icons-png.flaticon.com/512/3589/3589030.png" alt=""></div>
-          <a href="/attendance" class="card-link">
             <h4>Attendance
             </h4>
           </a>
