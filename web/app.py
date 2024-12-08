@@ -155,7 +155,78 @@ def user_verification(student_id):
     # Pass the student's verification status to the template
     return render_template('student/user_verification.html', student=student)
 
+# profile and profile update
+@app.route('/profile')
+def profile():
+    if 'user_type' in session and session['user_type'] == 'student':
+        with get_db_connection() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT * FROM student_details WHERE std_id = %s", (session['student_id'],))
+                student = cursor.fetchone()
+        
+        if not student:
+            flash('Profile not found.', 'error')
+            return redirect(url_for('login'))
 
+        return render_template('student/profile.html', student=student)
+
+    flash('Unauthorized access.', 'error')
+    return redirect(url_for('login'))
+
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    if 'user_type' in session and session['user_type'] == 'student':
+        # Fetch form data
+        std_name = request.form.get('std_name', '').strip()
+        std_email = request.form.get('std_email', '').strip()
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute("""
+                        UPDATE student_details 
+                        SET std_name = %s, std_email = %s 
+                        WHERE std_id = %s
+                    """, (std_name, std_email, session['student_id']))
+                    conn.commit()
+                    flash('Profile updated successfully.', 'success')
+                except Exception as e:
+                    flash(f'Error: {str(e)}', 'error')
+
+        return redirect(url_for('profile'))
+    
+    flash('Unauthorized access.', 'error')
+    return redirect(url_for('login'))
+
+
+@app.route('/reset_password', methods=['POST'])
+def reset_password():
+    if 'user_type' in session and session['user_type'] == 'student':
+        password = request.form.get('std_passwd', '').strip()
+        confirm_password = request.form.get('confirm-password', '').strip()
+
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return redirect(url_for('profile'))
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute("""
+                        UPDATE student_details 
+                        SET std_passwd = %s 
+                        WHERE std_id = %s
+                    """, (password, session['student_id']))
+                    conn.commit()
+                    flash('Password updated successfully.', 'success')
+                except Exception as e:
+                    flash(f'Error: {str(e)}', 'error')
+
+        return redirect(url_for('profile'))
+    
+    flash('Unauthorized access.', 'error')
+    return redirect(url_for('login'))
 
 # # #! attendance
 # @app.route('/attendance')

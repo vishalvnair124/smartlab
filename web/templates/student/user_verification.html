@@ -87,5 +87,27 @@
     <p>Your account is waiting for admin approval. Please be patient, as this process may take a few moments.</p>
     <div class="loader"></div>
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Add a small delay for the fade-in effect
+      setTimeout(function () {
+        const flashMessages = document.querySelectorAll('.flash');
+        flashMessages.forEach(function (message) {
+          message.classList.add('show'); // Trigger the fade-in
+        });
+      }, 100); // Delay the fade-in slightly
+
+      setTimeout(function () {
+        const flashMessages = document.querySelectorAll('.flash');
+        flashMessages.forEach(function (message) {
+          message.classList.add('fade-out');
+          setTimeout(function () {
+            message.style.display = 'none';
+          }, 300); // Wait for fade-out transition to complete
+        });
+      }, 2000); // Auto-dismiss after 5 seconds
+    });
+  </script>
+
 </body>
 </html>
