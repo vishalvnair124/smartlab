@@ -4,6 +4,8 @@ from reportlab.pdfgen import canvas
 import io
 import mysql.connector
 
+from datetime import timedelta
+
 
 
 app = Flask(__name__)
@@ -14,7 +16,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'smartlab1',
+    'database': 'smartlab',
 }
 
 # Function to connect to the database
@@ -250,60 +252,49 @@ def reset_password():
 # }
 
 
-@app.route('/student/attendance/<int:student_id>')
-def attendance(student_id):
-    conn = get_db_connection()
+@app.route('/student/attendance', methods=['GET'])
+def attendance():
+    student_id = session.get('student_id')
+    if session.get('user_type') != 'student':
+        flash('You must be logged in as a student to access the dashboard.', 'error')
+        return redirect("/")  # Redirect to login page if not logged in as a student
+
+    conn = get_db_connection() 
     cursor = conn.cursor(dictionary=True)
-    
-     # Get session details along with course and batch details
-    cursor.execute("""
-        SELECT 
-            s.s_id, 
-            s.s_date, 
-            s.s_start_time,
-            s.s_end_time,
-            c.course_name, 
-            b.bat_name 
-        FROM session_details s
-        JOIN course_details c ON s.course_id = c.course_id
-        JOIN batch_details b ON c.bat_id = b.bat_id
-        WHERE s.s_id = %s
-    """, (student_id,student_id))
-    session_details = cursor.fetchone()
-    
-    # You can add logic here to fetch student-specific attendance details
-    return render_template('student/attendance.html',attendance=session_details)
+    query = '''
+            SELECT 
+                sa.*, 
+                sd.std_name,  
+                sd.std_rollno,
+                ss.course_id,
+                ss.make_attendance,
+                ss.s_date,
+                ss.s_start_time,
+                ss.s_end_time,
+                cc.course_name,
+                bb.bat_name
+            FROM student_attendance sa
+            JOIN student_details sd ON sa.std_id = sd.std_id
+            JOIN session_details ss ON sa.s_id = ss.s_id
+            JOIN course_details cc ON ss.course_id = cc.course_id
+            JOIN batch_details bb ON cc.bat_id = bb.bat_id
+            WHERE sa.std_id = %s
+            '''
+            
+    cursor.execute(query, (student_id,))
+    attendance = cursor.fetchall()
 
-# # student profile
-# # Mock student data
-# student_data = {
-#     "name": "Alice Johnson",
-#     "email": "alice.johnson@example.com",
-#     "roll_number": "CS2024001",
-#     "department": "Computer Science",
-#     "device": "Laptop",
-#     "session": "2023-2024",
-#     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
-# }
+    if not attendance:
+        return render_template('student/attendance.html', attendance=None, message="No attendance records found.")
+            
+    for record in attendance:
+        if isinstance(record['s_start_time'], timedelta):
+            record['s_start_time'] = str(record['s_start_time'])
+        if isinstance(record['s_end_time'], timedelta):
+            record['s_end_time'] = str(record['s_end_time'])
 
-# @app.route("/student/profile")
-# def profile():
-#     """Render the profile page."""
-#     return render_template("/student/profile.html", student=student_data)
+    return render_template('student/attendance.html', attendance=attendance)
 
-# profile updates
-# @app.route("/profile_update", methods=["GET", "POST"])
-# def update_profile():
-#     """Render and process the profile update form."""
-#     if request.method == "POST":
-#         # Update student data
-#         student_data["name"] = request.form["name"]
-#         student_data["email"] = request.form["email"]
-#         student_data["device"] = request.form["device"]
-#         student_data["session"] = request.form["session"]
-#         student_data["courses"] = request.form["courses"].split(",")  # Split courses by commas
-#         return redirect(url_for("/profile_update"))
-#     return render_template("/student/profile_update.html", student=student_data)
 
 
 # Student dashboard route
@@ -317,6 +308,7 @@ def student_dashboard(student_id):
     return render_template('student/dashboard.html', student_id=student_id)
 
 
+#Admin
 
 
 # Admin dashboard 
