@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file,session
-import io
-from flask import send_file
 from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
+<<<<<<< HEAD
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib.units import inch
+=======
+import io
+>>>>>>> f23abc279fae91440769a485b0f1ae1bcc57d074
 import mysql.connector
 
 
@@ -19,7 +19,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'smartlab',
+    'database': 'smartlab1',
 }
 
 # Function to connect to the database
@@ -160,7 +160,82 @@ def user_verification(student_id):
     # Pass the student's verification status to the template
     return render_template('student/user_verification.html', student=student)
 
+# profile and profile update
+@app.route('/profile')
+def profile():
+    if 'user_type' in session and session['user_type'] == 'student':
+        with get_db_connection() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT * FROM student_details WHERE std_id = %s", (session['student_id'],))
+                student = cursor.fetchone()
+        
+        if not student:
+            flash('Profile not found.', 'error')
+            return redirect(url_for('login'))
 
+        return render_template('student/profile.html', student=student)
+    
+    flash('Unauthorized access.', 'error')
+    return redirect(url_for('login'))
+
+
+# Update Profile
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    if 'user_type' in session and session['user_type'] == 'student':
+        # Fetch form data
+        std_name = request.form.get('std_name', '').strip()
+        std_email = request.form.get('std_email', '').strip()
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                try:
+                    # Update student data in database
+                    cursor.execute("""
+                        UPDATE student_details 
+                        SET std_name = %s, std_email = %s 
+                        WHERE std_id = %s
+                    """, (std_name, std_email, session['student_id']))
+                    conn.commit()
+                    flash('Profile updated successfully.', 'success')
+                except Exception as e:
+                    flash(f'Error: {str(e)}', 'error')
+        
+        return redirect(url_for('profile'))
+    
+    flash('Unauthorized access.', 'error')
+    return redirect(url_for('login'))
+
+
+# Password Reset
+@app.route('/reset_password', methods=['POST'])
+def reset_password():
+    if 'user_type' in session and session['user_type'] == 'student':
+        password = request.form.get('std_passwd', '').strip()
+        confirm_password = request.form.get('confirm-password', '').strip()
+
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return redirect(url_for('profile'))
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                try:
+                    # Update the password in the database
+                    cursor.execute("""
+                        UPDATE student_details 
+                        SET std_passwd = %s 
+                        WHERE std_id = %s
+                    """, (password, session['student_id']))
+                    conn.commit()
+                    flash('Password updated successfully.', 'success')
+                except Exception as e:
+                    flash(f'Error: {str(e)}', 'error')
+        
+        return redirect(url_for('profile'))
+    
+    flash('Unauthorized access.', 'error')
+    return redirect(url_for('login'))
 
 # # #! attendance
 # @app.route('/attendance')
@@ -334,11 +409,17 @@ def generate_attendance_pdf(s_id):
 
     conn.close()
 
-
+    # Generate PDF
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
+    pdf.setTitle("Attendance Report")
+    pdf.drawString(100, height - 100, f"Attendance Report for {session_details['course_name']}")
+    pdf.drawString(100, height - 120, f"Date: {session_details['s_date']}")
+    pdf.drawString(100, height - 140, f"Batch: {session_details['bat_name']}")
+    pdf.drawString(100, height - 160, "Student Attendance:")
 
+<<<<<<< HEAD
     # Title
     title = "ATTENDANCE REPORT"
     pdf.setTitle(title)
@@ -396,12 +477,29 @@ def generate_attendance_pdf(s_id):
     # Wrap the table in a story list and draw on the canvas
     table.wrapOn(pdf, width, height)
     table.drawOn(pdf, x_position, height - 170 - len(students) * 20)
+=======
+    # Add table headers
+    pdf.drawString(100, height - 180, "Roll No")
+    pdf.drawString(200, height - 180, "Name")
+    pdf.drawString(300, height - 180, "Login Time")
+    pdf.drawString(400, height - 180, "Logout Time")
+
+    # Add student attendance data
+    y_position = height - 200
+    for student in students:
+        pdf.drawString(100, y_position, student['std_rollno'])
+        pdf.drawString(200, y_position, student['std_name'])
+        pdf.drawString(300, y_position, str(student['login_time']) if student['login_time'] else "Absent")
+        pdf.drawString(400, y_position, str(student['logout_time']) if student['logout_time'] else "Absent")
+        y_position -= 20  # Move down for the next student
+>>>>>>> f23abc279fae91440769a485b0f1ae1bcc57d074
 
     pdf.showPage()
     pdf.save()
 
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="attendance_report.pdf", mimetype='application/pdf')
+
 
 @app.route('/admin/batches')
 def batches():

@@ -1,31 +1,252 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Profile</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Toastify CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+  <!-- Toastify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      color: #333;
+      line-height: 1.6;
+    }
+
+    header {
+      background: #ff920c;
+      color: white;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    form input {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background: #ff920c;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    /* Flash Message */
+    .flash_div {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      width: 300px;
+    }
+
+    /* Style for Flash Message Wrapper */
+    .flashes {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Style individual flash messages */
+    .flash {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 15px;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      animation: slideIn 0.5s ease-out;
+    }
+
+    /* Success Message Style */
+    .flash.success {
+      background-color: #28a745;
+    }
+
+    /* Error Message Style */
+    .flash.error {
+      background-color: #dc3545;
+    }
+
+    /* Animate the flash messages with fade-in */
+    @keyframes slideIn {
+      0% {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Animation for Dismiss (fade-out) */
+    .flash.fade-out {
+      animation: fadeOut 1s forwards;
+    }
+
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+
+    .logout {
+      display: flex;
+      justify-content: flex-end;
+      /* Aligns to the right */
+      margin-right: 2rem;
+      /* Optional: Adds some padding from the edge */
+    }
+
+    .logout i {
+      font-size: 1.2rem;
+      cursor: pointer;
+      /* Default color */
+      transition: color 0.3s ease;
+      padding-bottom: 5rem;
+    }
+
+    .logout i:hover:active {
+      color: rgb(255, 0, 17);
+    }
+
+    .back-button {
+      margin-top: 1rem;
+      background-color: #ff530a;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .back-button:hover {
+      background-color: #5a6268;
+    }
+    .back_arrow{
+      font-size: 1.5rem;
+      margin-top: 1rem;
+      margin-left: .2rem;
+      color: #007bff;
+    }
+    .arrow i:hover:active{
+       color: rgb(255, 70, 70);
+    }
+  </style>
 </head>
+
 <body>
-  <div class="profile-container">
-    <header class="profile-header">
-      <img src="static/images/profile_placeholder.png" alt="Profile Picture" class="profile-pic">
-      <h1>{{ student['name'] }}</h1>
-      <p><strong>Email:</strong> {{ student['email'] }}</p>
-      <p><strong>Roll Number:</strong> {{ student['roll_number'] }}</p>
-      <p><strong>Department:</strong> {{ student['department'] }}</p>
-      <p><strong>Device:</strong> {{ student['device'] }}</p>
-      <p><strong>Session:</strong> {{ student['session'] }}</p>
-    </header>
-    <main class="profile-details">
-      <h2>Courses</h2>
-      <ul>
-        {% for course in student['courses'] %}
-          <li>{{ course }}</li>
-        {% endfor %}
-      </ul>
-      <a href="/profile_update" class="btn">Update Profile</a>
-    </main>
+  <!-- Header Section -->
+  <header>
+    Profile Update
+  </header>
+
+  <div class="flash_div">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flashes">
+      {% for category, message in messages %}
+      <div class="flash {{ category }}">
+        <span class="flash-message">{{ message }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
   </div>
+
+
+  <!-- Update Profile Section -->
+  <div class="arrow"><i class="fa-solid fa-arrow-left back_arrow" onclick="history.back();"></i></div>
+  <div class="container">
+    <h2>Update Your Profile</h2>
+    <form action="{{ url_for('update_profile') }}" method="POST">
+      <label for="std_name">Name:</label>
+      <input type="text" name="std_name" value="{{ student['std_name'] }}" required>
+
+      <label for="std_email">Email:</label>
+      <input type="email" name="std_email" value="{{ student['std_email'] }}" required>
+
+      <button type="submit">Update</button>
+    </form>
+  </div>
+
+  <!-- Password Section -->
+  <div class="container">
+    <h2>Change Password</h2>
+    <form action="{{ url_for('reset_password') }}" method="POST">
+      <label for="std_passwd">New Password:</label>
+      <input type="password" name="std_passwd" required>
+
+      <label for="confirm-password">Confirm Password:</label>
+      <input type="password" name="confirm-password" required>
+
+      <button type="submit">Change Password</button>
+    </form>
+  </div>
+
+  <!-- JS to handle flashed messages via Toastify -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Add a small delay for the fade-in effect
+      setTimeout(function () {
+        const flashMessages = document.querySelectorAll('.flash');
+        flashMessages.forEach(function (message) {
+          message.classList.add('show'); // Trigger the fade-in
+        });
+      }, 100); // Delay the fade-in slightly
+
+      setTimeout(function () {
+        const flashMessages = document.querySelectorAll('.flash');
+        flashMessages.forEach(function (message) {
+          message.classList.add('fade-out');
+          setTimeout(function () {
+            message.style.display = 'none';
+          }, 300); // Wait for fade-out transition to complete
+        });
+      }, 2000); // Auto-dismiss after 5 seconds
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
+
 </html>
