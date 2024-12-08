@@ -1,7 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file,session
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 import io
+from flask import send_file
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Table, TableStyle
 import mysql.connector
 from datetime import timedelta
 
@@ -34,7 +38,6 @@ def login():
         conn = get_db_connection()  # Open connection once
         cursor = conn.cursor(dictionary=True)
 
-        
         try:
             # Check if the user is an admin
             cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
@@ -46,22 +49,31 @@ def login():
                 return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
             # Check if the user is a student
-            cursor.execute("SELECT * FROM  student_details WHERE std_email=%s AND std_passwd=%s", (email, password))  # Corrected table and column names
+            cursor.execute("SELECT * FROM student_details WHERE std_email=%s AND std_passwd=%s", (email, password))
             student = cursor.fetchone()
 
-            if student:  # Redirect to the student dashboard
+            if student:
+                # Store the student details in session
                 session['user_type'] = 'student'
                 session['student_id'] = student['std_id']
-                flash('Login successfully!', 'info')
-                return redirect(url_for('student_dashboard', student_id=student['std_id']))
+                session['student_name'] = student['std_name']
+
+                # Check the student's verification status
+                if student['std_status'] == 1:
+                    flash('Login successfully!', 'info')
+                    return redirect(url_for('student_dashboard', std_name=student['std_name'], student_id=student['std_id']))  # Redirect to the student dashboard
+                else:
+                    flash('Please wait for admin approval.', 'warning')
+                    return redirect(url_for('user_verification', student_id=student['std_id']))  # Redirect to user verification page
 
             # Invalid credentials
             flash('Invalid email or password', 'error')
 
         finally:
-            conn.close()  # Ensure that the connection is closed after both queries
+            conn.close()  # Ensure that the connection is closed
 
     return render_template('auth/login.html')
+
 
 # logout to clear session
 @app.route('/logout')
@@ -77,54 +89,79 @@ def register():
         # Collect form data
         std_rollno = request.form.get('std_rollno', '').strip()
         batch_id = request.form.get('bat_id', '').strip()
+        std_name = request.form.get('std_name', '').strip()
         std_email = request.form.get('std_email', '').strip()
         password = request.form.get('std_passwd', '').strip()
         confirm_password = request.form.get('confirm-password', '').strip()
 
         # Input validation
-        if not std_rollno or not batch_id or not std_email or not password or not confirm_password:
+        if not all([std_rollno, batch_id, std_name, std_email, password, confirm_password]):
             flash('All fields are required.', 'error')
             return redirect('/register')
 
         if password != confirm_password:
-            flash('Passwords does not match.', 'error')
+            flash('Passwords do not match.', 'error')
             return redirect('/register')
 
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        # Database operations
+        with get_db_connection() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                try:
+                    # Check if roll number or email already exists
+                    cursor.execute("""
+                        SELECT * FROM student_details 
+                        WHERE std_rollno = %s OR std_email = %s
+                    """, (std_rollno, std_email))
+                    existing_user = cursor.fetchone()
 
-        try:
-            # Check if email already exists in the database
-            cursor.execute("SELECT * FROM student_details WHERE std_email=%s", (std_email,))
-            existing_user = cursor.fetchone()
+                    if existing_user:
+                        if existing_user['std_rollno'] == std_rollno:
+                            flash('Roll number is already registered.', 'error')
+                        elif existing_user['std_email'] == std_email:
+                            flash('Email is already registered. Please use another email.', 'error')
+                        return redirect('/register')
 
-            if existing_user:
-                flash('Email is already registered. Please use another email.', 'error')
-                return redirect('/register')
+                    # Insert user with plain text password (not recommended for production)
+                    cursor.execute("""
+                        INSERT INTO student_details (std_rollno, bat_id, std_name, std_email, std_passwd, std_status)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (std_rollno, batch_id, std_name, std_email, password, 0))
+                    conn.commit()
 
-            # Insert new user into the database
-            cursor.execute("""
-                INSERT INTO student_details (std_rollno, bat_id, std_email, std_passwd)
-                VALUES (%s, %s, %s, %s)
-            """, (std_rollno, batch_id, std_email, password))
-            conn.commit()
+                    flash('Registration successful. Please log in.', 'success')
+                    return redirect('/')
+                except mysql.connector.Error as err:
+                    flash(f'Database Error: {err}', 'error')
+                    return redirect('/register')
+    # Fetch batches for dropdown
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT * FROM batch_details")
+            batches = cursor.fetchall()
 
-            flash('Registration successful. Please log in.', 'success')
-            return redirect('/') # fix route
+    return render_template('auth/register.html', batches=batches)
 
-        except mysql.connector.Error as err:
-            flash(f'Error: {err}', 'error')
-            return redirect('/register')
 
-        finally:
-            conn.close()
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM batch_details")
-    batches  = cursor.fetchall()
-    conn.close()
-    
-    return render_template('auth/register.html',batches= batches)
+# admin verification
+@app.route('/user_verification/<int:student_id>')
+def user_verification(student_id):
+    # Add logic to fetch and verify user details using the provided student_id
+    # Example: Fetch the student's verification status from the database
+
+    # Connect to the database
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT * FROM student_details WHERE std_id = %s", (student_id,))
+            student = cursor.fetchone()
+
+    if not student:
+        flash('Student not found.', 'error')
+        return redirect('/')
+
+    # Pass the student's verification status to the template
+    return render_template('student/user_verification.html', student=student)
+
+
 
 
 
@@ -303,37 +340,58 @@ def generate_attendance_pdf(s_id):
 
     conn.close()
 
-    # Generate PDF
+
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-    pdf.setTitle("Attendance Report")
-    pdf.drawString(100, height - 100, f"Attendance Report for {session_details['course_name']}")
-    pdf.drawString(100, height - 120, f"Date: {session_details['s_date']}")
-    pdf.drawString(100, height - 140, f"Batch: {session_details['bat_name']}")
-    pdf.drawString(100, height - 160, "Student Attendance:")
 
-    # Add table headers
-    pdf.drawString(100, height - 180, "Roll No")
-    pdf.drawString(200, height - 180, "Name")
-    pdf.drawString(300, height - 180, "Login Time")
-    pdf.drawString(400, height - 180, "Logout Time")
-
-    # Add student attendance data
-    y_position = height - 200
+    # Title
+    title = f"ATTENDANCE REPORT" 
+    pdf.setTitle(title)
+    title_width = pdf.stringWidth(title, "Helvetica", 12)
+    pdf.drawString((width - title_width) / 2, height - 80, title)
+    
+    # Session details
+    course=f"Subjecjt: {session_details['course_name']}"
+    s_date = f"Date: {session_details['s_date']}"
+    time = f"Time: {session_details['s_start_time']} - {session_details['s_end_time']}"
+    batch = f"Batch: {session_details['bat_name']}"
+    pdf.drawString(100, height - 160, time)
+    pdf.drawString(100, height - 120, course)
+    pdf.drawString(100, height - 140, s_date)
+    pdf.drawString(100, height - 180, batch)
+    
+    # Student attendance table
+    data = [["Roll No", "Name", "Login Time", "Logout Time"]]
     for student in students:
-        pdf.drawString(100, y_position, student['std_rollno'])
-        pdf.drawString(200, y_position, student['std_name'])
-        pdf.drawString(300, y_position, str(student['login_time']) if student['login_time'] else "Absent")
-        pdf.drawString(400, y_position, str(student['logout_time']) if student['logout_time'] else "Absent")
-        y_position -= 20  # Move down for the next student
+        row = [
+            student['std_rollno'],
+            student['std_name'],
+            str(student['login_time']) if student['login_time'] else "Absent",
+            str(student['logout_time']) if student['logout_time'] else "Absent"
+        ]
+        data.append(row)
+    
+    table = Table(data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 1.5*inch])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    
+    # Wrap the table in a story list and draw on the canvas
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, 100, height - 220 - len(students) * 20)
 
     pdf.showPage()
     pdf.save()
 
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="attendance_report.pdf", mimetype='application/pdf')
-
 
 @app.route('/admin/batches')
 def batches():
