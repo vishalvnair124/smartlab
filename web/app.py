@@ -14,7 +14,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'smartlab',
+    'database': 'smartlab1',
 }
 
 # Function to connect to the database
@@ -44,14 +44,16 @@ def login():
                 return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
             # Check if the user is a student
-            cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
+            # Check if the user is a student
+            cursor.execute("SELECT * FROM  student_details WHERE std_email=%s AND std_passwd=%s", (email, password))  # Corrected table and column names
             student = cursor.fetchone()
 
             if student:  # Redirect to the student dashboard
                 session['user_type'] = 'student'
                 session['student_id'] = student['std_id']
+                session['student_name'] = student['std_name']
                 flash('Login successfully!', 'info')
-                return redirect(url_for('student_dashboard', student_id=student['std_id']))
+                return redirect(url_for('student_dashboard', std_name=student['std_name'], student_id=student['std_id']))
 
             # Invalid credentials
             flash('Invalid email or password', 'error')
@@ -75,54 +77,57 @@ def register():
         # Collect form data
         std_rollno = request.form.get('std_rollno', '').strip()
         batch_id = request.form.get('bat_id', '').strip()
+        std_name = request.form.get('std_name', '').strip()
         std_email = request.form.get('std_email', '').strip()
         password = request.form.get('std_passwd', '').strip()
         confirm_password = request.form.get('confirm-password', '').strip()
 
         # Input validation
-        if not std_rollno or not batch_id or not std_email or not password or not confirm_password:
+        if not all([std_rollno, batch_id, std_name, std_email, password, confirm_password]):
             flash('All fields are required.', 'error')
             return redirect('/register')
 
         if password != confirm_password:
-            flash('Passwords does not match.', 'error')
+            flash('Passwords do not match.', 'error')
             return redirect('/register')
 
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        # Database operations
+        with get_db_connection() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                try:
+                    # Check if roll number or email already exists
+                    cursor.execute("""
+                        SELECT * FROM student_details 
+                        WHERE std_rollno = %s OR std_email = %s
+                    """, (std_rollno, std_email))
+                    existing_user = cursor.fetchone()
 
-        try:
-            # Check if email already exists in the database
-            cursor.execute("SELECT * FROM student_details WHERE std_email=%s", (std_email,))
-            existing_user = cursor.fetchone()
+                    if existing_user:
+                        if existing_user['std_rollno'] == std_rollno:
+                            flash('Roll number is already registered.', 'error')
+                        elif existing_user['std_email'] == std_email:
+                            flash('Email is already registered. Please use another email.', 'error')
+                        return redirect('/register')
 
-            if existing_user:
-                flash('Email is already registered. Please use another email.', 'error')
-                return redirect('/register')
+                    # Insert user with plain text password (not recommended for production)
+                    cursor.execute("""
+                        INSERT INTO student_details (std_rollno, bat_id, std_name, std_email, std_passwd, std_status)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (std_rollno, batch_id, std_name, std_email, password, 0))
+                    conn.commit()
 
-            # Insert new user into the database
-            cursor.execute("""
-                INSERT INTO student_details (std_rollno, bat_id, std_email, std_passwd)
-                VALUES (%s, %s, %s, %s)
-            """, (std_rollno, batch_id, std_email, password))
-            conn.commit()
+                    flash('Registration successful. Please log in.', 'success')
+                    return redirect('/')
+                except mysql.connector.Error as err:
+                    flash(f'Database Error: {err}', 'error')
+                    return redirect('/register')
+    # Fetch batches for dropdown
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT * FROM batch_details")
+            batches = cursor.fetchall()
 
-            flash('Registration successful. Please log in.', 'success')
-            return redirect('/') # fix route
-
-        except mysql.connector.Error as err:
-            flash(f'Error: {err}', 'error')
-            return redirect('/register')
-
-        finally:
-            conn.close()
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM batch_details")
-    batches  = cursor.fetchall()
-    conn.close()
-    
-    return render_template('auth/register.html',batches= batches)
+    return render_template('auth/register.html', batches=batches)
 
 # # #! attendance
 # @app.route('/attendance')
