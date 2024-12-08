@@ -1,8 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from flask import Flask, send_file
-import io
 import mysql.connector
 
 
@@ -32,12 +28,15 @@ def login():
         conn = get_db_connection()  # Open connection once
         cursor = conn.cursor(dictionary=True)
 
+        
         try:
             # Check if the user is an admin
             cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
             admin = cursor.fetchone()
 
             if admin:
+                session['user_type'] = 'admin'  # Store user type in session
+                flash('Login successfully!', 'info')
                 return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
             # Check if the user is a student
@@ -45,20 +44,74 @@ def login():
             student = cursor.fetchone()
 
             if student:  # Redirect to the student dashboard
+                session['user_type'] = 'student'
+                session['student_id'] = student['std_id']
+                flash('Login successfully!', 'info')
                 return redirect(url_for('student_dashboard', student_id=student['std_id']))
 
             # Invalid credentials
-            flash('Invalid email or password', 'danger')
+            flash('Invalid email or password', 'error')
 
         finally:
             conn.close()  # Ensure that the connection is closed after both queries
 
     return render_template('auth/login.html')
 
+# logout to clear session
+@app.route('/logout')
+def logout():
+    session.clear()  # Clear the session to log the user out
+    flash('Logout successfully.', 'info')
+    return redirect('/')
 
-#!student = register
-@app.route('/register')
+# register student
+@app.route('/register', methods=['GET', 'POST'])
 def register():
+    if request.method == 'POST':
+        # Collect form data
+        std_rollno = request.form.get('std_rollno', '').strip()
+        batch_id = request.form.get('bat_id', '').strip()
+        std_email = request.form.get('std_email', '').strip()
+        password = request.form.get('std_passwd', '').strip()
+        confirm_password = request.form.get('confirm-password', '').strip()
+
+        # Input validation
+        if not std_rollno or not batch_id or not std_email or not password or not confirm_password:
+            flash('All fields are required.', 'error')
+            return redirect('/register')
+
+        if password != confirm_password:
+            flash('Passwords does not match.', 'error')
+            return redirect('/register')
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        try:
+            # Check if email already exists in the database
+            cursor.execute("SELECT * FROM student_details WHERE std_email=%s", (std_email,))
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                flash('Email is already registered. Please use another email.', 'error')
+                return redirect('/register')
+
+            # Insert new user into the database
+            cursor.execute("""
+                INSERT INTO student_details (std_rollno, bat_id, std_email, std_passwd)
+                VALUES (%s, %s, %s, %s)
+            """, (std_rollno, batch_id, std_email, password))
+            conn.commit()
+
+            flash('Registration successful. Please log in.', 'success')
+            return redirect('/') # fix route
+
+        except mysql.connector.Error as err:
+            flash(f'Error: {err}', 'error')
+            return redirect('/register')
+
+        finally:
+            conn.close()
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM batch_details")
@@ -85,29 +138,30 @@ def register():
 # }
 
 
-# @app.route('/student/attendance/<int:student_id>')
-# def attendance(a_id):
-#     conn = get_db_connection()
-#     cursor = conn.cursor(dictionary=True)
+@app.route('/student/attendance/<int:student_id>')
+def attendance(student_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
     
-#      # Get session details along with course and batch details
-#     cursor.execute("""
-#         SELECT 
-#             s.s_id, 
-#             s.s_date, 
-#             s.s_start_time,
-#             s.s_end_time,
-#             c.course_name, 
-#             b.bat_name 
-#         FROM session_details s
-#         JOIN course_details c ON s.course_id = c.course_id
-#         JOIN batch_details b ON c.bat_id = b.bat_id
-#         WHERE s.s_id = %s
-#     """, (s_id,))
-#     session_details = cursor.fetchone()
+     # Get session details along with course and batch details
+    cursor.execute("""
+        SELECT 
+            s.s_id, 
+            s.s_date, 
+            s.s_start_time,
+            s.s_end_time,
+            c.course_name, 
+            b.bat_name 
+        FROM session_details s
+        JOIN course_details c ON s.course_id = c.course_id
+        JOIN batch_details b ON c.bat_id = b.bat_id
+        WHERE s.s_id = %s
+    """, (student_id,student_id))
+    session_details = cursor.fetchone()
     
-#     # You can add logic here to fetch student-specific attendance details
-#     return render_template('student/attendance.html')
+    # You can add logic here to fetch student-specific attendance details
+    return render_template('student/attendance.html',attendance=session_details)
+
 # # student profile
 # # Mock student data
 # student_data = {
@@ -120,14 +174,12 @@ def register():
 #     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
 # }
 
-
-
-# @app.route("/profile")
+# @app.route("/student/profile")
 # def profile():
 #     """Render the profile page."""
 #     return render_template("/student/profile.html", student=student_data)
 
-# # profile updates
+# profile updates
 # @app.route("/profile_update", methods=["GET", "POST"])
 # def update_profile():
 #     """Render and process the profile update form."""
@@ -142,19 +194,26 @@ def register():
 #     return render_template("/student/profile_update.html", student=student_data)
 
 
-# # Student dashboard route
-# @app.route('/student/dashboard/<int:student_id>')
-# def student_dashboard(student_id):
-#     # Fetch student-specific data if required using the student_id
-#     # return render_template('stshboard.hudent/datml', student_id=student_id)
-#     return render_template('student/dashboard.html', student_id=student_id)
+# Student dashboard route
+@app.route('/student/dashboard/<int:student_id>')
+def student_dashboard(student_id):
+    if 'user_type' not in session or session['user_type'] != 'student' or session.get('student_id') != student_id:
+        # If the user is not logged in or the session does not match the student ID
+        flash('You must be logged in as a student to access the dashboard.', 'error')
+        return redirect(url_for('login'))  # Redirect to login page if not logged in as a student
+    # Fetch student-specific data if required using the student_id
+    return render_template('student/dashboard.html', student_id=student_id)
 
 
 
 
-# Admin dashboard route
+# Admin dashboard 
 @app.route('/admin/dashboard')
 def admin_dashboard():
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -344,7 +403,7 @@ def deactivate_batch(bat_id):
     return redirect('/admin/batches')
 
 
-# Route to display courses and handle course creation
+# courses
 @app.route('/admin/courses', methods=['GET', 'POST'])
 def courses():
     conn = get_db_connection()  # Establish connection
@@ -440,6 +499,7 @@ def deactivate_course(course_id):
 
     return redirect('/admin/courses')
 
+# admin students
 @app.route('/admin/students', methods=['GET'])
 def students():
     conn = get_db_connection()
@@ -490,6 +550,7 @@ def student_details(std_id):
     conn.close()
     return render_template('admin/student_details.html', student=student)
 
+#devices
 @app.route('/admin/devices', methods=['GET'])
 def view_devices():
     conn = get_db_connection()
@@ -546,6 +607,7 @@ def delete_device(device_id):
     conn.close()
     return redirect('/admin/devices')
 
+#sessions
 @app.route('/admin/session/create', methods=['GET', 'POST'])
 def create_session():
     conn = get_db_connection()
