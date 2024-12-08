@@ -70,6 +70,7 @@
       }
       .logout{
             display: flex;
+            justify-content:flex-end;
       }
       .logout i{
        margin-left: 60rem;
@@ -79,13 +80,112 @@
       .logout i:hover:active{
         color: rgb(255, 0, 17);
       }
+
+      /* Style for flashed messages */
+      .flash_div {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 20px;
+    }
+    
+    .flashes {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .flash {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        position: relative;
+        font-family: Arial, sans-serif;
+        font-size: 1rem;
+        opacity: 0; 
+        transform: translateY(20px); 
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .flash.show {
+      opacity: 1; /* Fade in to full visibility */
+      transform: translateY(0); /* Move to original position */
+    }
+    
+    .flash-message {
+        flex-grow: 1;
+        font-weight: bold;
+    }
+    
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        color: #721c24;
+        cursor: pointer;
+
+    }
+    
+    .close-btn:hover {
+        color: #f5c6cb; /* Light hover effect */
+    }
+    
+    /* Different styles based on message categories */
+    .flash.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .flash.error {
+      background-color: #c32222d4;
+      color: #ffffff;
+    }
+    
+    .flash.info {
+        background-color: #cce5ff;
+        color: #004085;
+        border: 1px solid #b8daff;
+        font-weight: bold;
+    }
+    
+    .flash.warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+    
+    /* For animations (optional) */
+    .flash.fade-out {
+        opacity: 0;
+    }
+    
+
     </style>
   </head>
   <body>
+    <div class="flash_div">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flashes">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">
+                <span class="flash-message">{{ message }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
     <div class="container dashboard-container">
       <h1 class="dashboard-title">Student Dashboard</h1>
-      <div class="logout">
-        <i class="fa-solid fa-right-from-bracket"></i>
+      <div class="logout" >
+        <a href="/logout"  > 
+        <i class="fa-solid fa-right-from-bracket">  </i>
+        </a>
       </div>
       <div class="row g-4">
         <!-- Courses Box -->
@@ -150,6 +250,30 @@
         </div>
       </div>
     </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Add a small delay for the fade-in effect
+        setTimeout(function() {
+            const flashMessages = document.querySelectorAll('.flash');
+            flashMessages.forEach(function(message) {
+                message.classList.add('show'); // Trigger the fade-in
+            });
+        }, 100); // Delay the fade-in slightly
+
+        setTimeout(function() {
+            const flashMessages = document.querySelectorAll('.flash');
+            flashMessages.forEach(function(message) {
+                message.classList.add('fade-out');
+                setTimeout(function() {
+                    message.style.display = 'none';
+                }, 300); // Wait for fade-out transition to complete
+            });
+        }, 1700); // Auto-dismiss after 5 seconds
+      });
+    </script>
+    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

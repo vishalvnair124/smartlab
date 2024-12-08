@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import mysql.connector
 
 
@@ -28,12 +28,15 @@ def login():
         conn = get_db_connection()  # Open connection once
         cursor = conn.cursor(dictionary=True)
 
+        
         try:
             # Check if the user is an admin
             cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
             admin = cursor.fetchone()
 
             if admin:
+                session['user_type'] = 'admin'  # Store user type in session
+                flash('Login successfully!', 'info')
                 return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
             # Check if the user is a student
@@ -41,16 +44,25 @@ def login():
             student = cursor.fetchone()
 
             if student:  # Redirect to the student dashboard
+                session['user_type'] = 'student'
+                session['student_id'] = student['std_id']
+                flash('Login successfully!', 'info')
                 return redirect(url_for('student_dashboard', student_id=student['std_id']))
 
             # Invalid credentials
-            flash('Invalid email or password', 'danger')
+            flash('Invalid email or password', 'error')
 
         finally:
             conn.close()  # Ensure that the connection is closed after both queries
 
     return render_template('auth/login.html')
 
+# logout to clear session
+@app.route('/logout')
+def logout():
+    session.clear()  # Clear the session to log the user out
+    flash('Logout successfully.', 'info')
+    return redirect('/')
 
 # register student
 @app.route('/register', methods=['GET', 'POST'])
@@ -65,11 +77,11 @@ def register():
 
         # Input validation
         if not std_rollno or not batch_id or not std_email or not password or not confirm_password:
-            flash('All fields are required.', 'danger')
+            flash('All fields are required.', 'error')
             return redirect('/register')
 
         if password != confirm_password:
-            flash('Passwords do not match.', 'danger')
+            flash('Passwords does not match.', 'error')
             return redirect('/register')
 
         conn = get_db_connection()
@@ -81,7 +93,7 @@ def register():
             existing_user = cursor.fetchone()
 
             if existing_user:
-                flash('Email is already registered. Please use another email.', 'danger')
+                flash('Email is already registered. Please use another email.', 'error')
                 return redirect('/register')
 
             # Insert new user into the database
@@ -92,10 +104,10 @@ def register():
             conn.commit()
 
             flash('Registration successful. Please log in.', 'success')
-            return redirect('/login')
+            return redirect('/') # fix route
 
         except mysql.connector.Error as err:
-            flash(f'Error: {err}', 'danger')
+            flash(f'Error: {err}', 'error')
             return redirect('/register')
 
         finally:
@@ -127,7 +139,7 @@ def register():
 
 
 @app.route('/student/attendance/<int:student_id>')
-def attendance(a_id):
+def attendance(student_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -144,11 +156,14 @@ def attendance(a_id):
         JOIN course_details c ON s.course_id = c.course_id
         JOIN batch_details b ON c.bat_id = b.bat_id
         WHERE s.s_id = %s
-    """, (s_id,))
+    """, (student_id,student_id))
     session_details = cursor.fetchone()
     
     # You can add logic here to fetch student-specific attendance details
-    return render_template('student/attendance.html')
+    return render_template('student/attendance.html',attendance=session_details)
+
+
+
 # # student profile
 # # Mock student data
 # student_data = {
@@ -184,8 +199,11 @@ def attendance(a_id):
 # Student dashboard route
 @app.route('/student/dashboard/<int:student_id>')
 def student_dashboard(student_id):
+    if 'user_type' not in session or session['user_type'] != 'student' or session.get('student_id') != student_id:
+        # If the user is not logged in or the session does not match the student ID
+        flash('You must be logged in as a student to access the dashboard.', 'error')
+        return redirect(url_for('login'))  # Redirect to login page if not logged in as a student
     # Fetch student-specific data if required using the student_id
-    # return render_template('stshboard.hudent/datml', student_id=student_id)
     return render_template('student/dashboard.html', student_id=student_id)
 
 
