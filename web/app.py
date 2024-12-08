@@ -1,5 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file,session
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import io
 import mysql.connector
+
 
 
 app = Flask(__name__)
