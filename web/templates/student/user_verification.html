@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Approval Pending</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .waiting-container {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 90%;
+      max-width: 500px;
+      animation: fadeIn 1.5s ease-in-out;
+    }
+
+    .waiting-container .icon {
+      font-size: 50px;
+      color: #ffc107;
+      margin-bottom: 20px;
+    }
+
+    .waiting-container h1 {
+      font-size: 1.8rem;
+      color: #343a40;
+      margin-bottom: 15px;
+    }
+
+    .waiting-container p {
+      font-size: 1rem;
+      color: #6c757d;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .waiting-container .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #007bff;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1.5s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div form action="/uer_verification/{{ student_id }}" class="waiting-container">
+    <div class="icon">
+      <i class="fa-solid fa-hourglass-half"></i>
+    </div>
+    <h1>Approval Pending</h1>
+    <p>Your account is waiting for admin approval. Please be patient, as this process may take a few moments.</p>
+    <div class="loader"></div>
+  </div>
+</body>
+</html>

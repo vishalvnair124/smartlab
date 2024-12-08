@@ -32,7 +32,6 @@ def login():
         conn = get_db_connection()  # Open connection once
         cursor = conn.cursor(dictionary=True)
 
-        
         try:
             # Check if the user is an admin
             cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
@@ -44,24 +43,31 @@ def login():
                 return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
             # Check if the user is a student
-            # Check if the user is a student
-            cursor.execute("SELECT * FROM  student_details WHERE std_email=%s AND std_passwd=%s", (email, password))  # Corrected table and column names
+            cursor.execute("SELECT * FROM student_details WHERE std_email=%s AND std_passwd=%s", (email, password))
             student = cursor.fetchone()
 
-            if student:  # Redirect to the student dashboard
+            if student:
+                # Store the student details in session
                 session['user_type'] = 'student'
                 session['student_id'] = student['std_id']
                 session['student_name'] = student['std_name']
-                flash('Login successfully!', 'info')
-                return redirect(url_for('student_dashboard', std_name=student['std_name'], student_id=student['std_id']))
+
+                # Check the student's verification status
+                if student['std_status'] == 1:
+                    flash('Login successfully!', 'info')
+                    return redirect(url_for('student_dashboard', std_name=student['std_name'], student_id=student['std_id']))  # Redirect to the student dashboard
+                else:
+                    flash('Please wait for admin approval.', 'warning')
+                    return redirect(url_for('user_verification', student_id=student['std_id']))  # Redirect to user verification page
 
             # Invalid credentials
             flash('Invalid email or password', 'error')
 
         finally:
-            conn.close()  # Ensure that the connection is closed after both queries
+            conn.close()  # Ensure that the connection is closed
 
     return render_template('auth/login.html')
+
 
 # logout to clear session
 @app.route('/logout')
@@ -128,6 +134,28 @@ def register():
             batches = cursor.fetchall()
 
     return render_template('auth/register.html', batches=batches)
+
+
+# admin verification
+@app.route('/user_verification/<int:student_id>')
+def user_verification(student_id):
+    # Add logic to fetch and verify user details using the provided student_id
+    # Example: Fetch the student's verification status from the database
+
+    # Connect to the database
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT * FROM student_details WHERE std_id = %s", (student_id,))
+            student = cursor.fetchone()
+
+    if not student:
+        flash('Student not found.', 'error')
+        return redirect('/')
+
+    # Pass the student's verification status to the template
+    return render_template('student/user_verification.html', student=student)
+
+
 
 # # #! attendance
 # @app.route('/attendance')
