@@ -223,24 +223,6 @@ def attendance(student_id):
 
 
 
-# @app.route("/student/profile")
-# def profile():
-#     """Render the profile page."""
-#     return render_template("/student/profile.html", student=student_data)
-
-# profile updates
-# @app.route("/profile_update", methods=["GET", "POST"])
-# def update_profile():
-#     """Render and process the profile update form."""
-#     if request.method == "POST":
-#         # Update student data
-#         student_data["name"] = request.form["name"]
-#         student_data["email"] = request.form["email"]
-#         student_data["device"] = request.form["device"]
-#         student_data["session"] = request.form["session"]
-#         student_data["courses"] = request.form["courses"].split(",")  # Split courses by commas
-#         return redirect(url_for("/profile_update"))
-#     return render_template("/student/profile_update.html", student=student_data)
 
 
 # Student dashboard route

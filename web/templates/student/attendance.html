@@ -58,7 +58,7 @@
       <h1>Attendance View</h1>
     </header>
     <main>
-      <table style = "text-align: center">
+      <table class="table table-striped"  style = "text-align: center">
         <thead>
           <tr>
             <th>Date</th>
@@ -72,11 +72,11 @@
         </thead>
         <tbody>
           <div class="std_header">
-            {% for record in attendance %}
-            <div>Name: {{record.std_name}}</div>
-            <div>Roll No: {{ record.std_rollno}}</div>
-            <div>Batch: {{record.bat_name}}</div>
-            {% endfor %}
+            {% if attendance %}
+            <div>Name: {{ attendance[0].std_name }}</div>
+            <div>Roll No: {{ attendance[0].std_rollno }}</div>
+            <div>Batch: {{ attendance[0].bat_name }}</div>
+        {% endif %}
           </div>
           <!-- <h3>Attendance Data: {{ attendance | tojson }}</h3> -->
           {% if attendance %}
