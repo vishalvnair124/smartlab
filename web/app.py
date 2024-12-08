@@ -6,6 +6,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Table, TableStyle
+from reportlab.lib.units import inch
 import mysql.connector
 
 
@@ -339,20 +340,32 @@ def generate_attendance_pdf(s_id):
     width, height = letter
 
     # Title
-    title = f"ATTENDANCE REPORT" 
+    title = "ATTENDANCE REPORT"
     pdf.setTitle(title)
     title_width = pdf.stringWidth(title, "Helvetica", 12)
-    pdf.drawString((width - title_width) / 2, height - 80, title)
-    
+    pdf.drawString((width - title_width) / 2, height - 60, title)
+
     # Session details
-    course=f"Subjecjt: {session_details['course_name']}"
+    course = f"Subject: {session_details['course_name']}"
     s_date = f"Date: {session_details['s_date']}"
     time = f"Time: {session_details['s_start_time']} - {session_details['s_end_time']}"
     batch = f"Batch: {session_details['bat_name']}"
-    pdf.drawString(100, height - 160, time)
-    pdf.drawString(100, height - 120, course)
-    pdf.drawString(100, height - 140, s_date)
-    pdf.drawString(100, height - 180, batch)
+
+    # Define margin_right
+    margin_right = 50
+
+    # Calculate widths for right alignment
+    s_date_width = pdf.stringWidth(s_date, "Helvetica", 12)
+    time_width = pdf.stringWidth(time, "Helvetica", 12)
+
+    # Draw left-aligned text
+    pdf.drawString(50, height - 100, course)
+    pdf.drawString(50, height - 120, batch)
+
+    # Draw right-aligned text
+    pdf.drawString(width - s_date_width - margin_right, height - 100, s_date)
+    pdf.drawString(width - time_width - margin_right, height - 120, time)
+    
     
     # Student attendance table
     data = [["Roll No", "Name", "Login Time", "Logout Time"]]
@@ -375,10 +388,14 @@ def generate_attendance_pdf(s_id):
         ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
     ]))
-    
+
+    # Calculate the total width of the table
+    table_width = 6.5 * inch  # Sum of colWidths: 1.5 + 2 + 1.5 + 1.5 inches
+    x_position = (width - table_width) / 2  # Center the table
+
     # Wrap the table in a story list and draw on the canvas
     table.wrapOn(pdf, width, height)
-    table.drawOn(pdf, 100, height - 220 - len(students) * 20)
+    table.drawOn(pdf, x_position, height - 170 - len(students) * 20)
 
     pdf.showPage()
     pdf.save()
