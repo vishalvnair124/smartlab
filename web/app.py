@@ -1,5 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file,session
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import io
 import mysql.connector
+
 
 
 app = Flask(__name__)
@@ -10,7 +14,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'smartlab',
+    'database': 'smartlab1',
 }
 
 # Function to connect to the database
@@ -40,7 +44,7 @@ def login():
                 return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
             # Check if the user is a student
-            cursor.execute("SELECT * FROM student_details WHERE std_email=%s AND std_passwd=%s", (email, password))
+            cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
             student = cursor.fetchone()
 
             if student:  # Redirect to the student dashboard
@@ -243,6 +247,85 @@ def admin_dashboard():
         students_count=students_count,
         devices_count=devices_count
     )
+@app.route('/admin/session/<int:s_id>/attendance_view/pdf')
+def generate_attendance_pdf(s_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Get session details
+    cursor.execute("""
+        SELECT 
+            s.s_id, 
+            s.s_date, 
+            s.s_start_time, 
+            s.s_end_time, 
+            c.course_name, 
+            b.bat_name 
+        FROM session_details s
+        JOIN course_details c ON s.course_id = c.course_id
+        JOIN batch_details b ON c.bat_id = b.bat_id
+        WHERE s.s_id = %s
+    """, (s_id,))
+    session_details = cursor.fetchone()
+
+    if not session_details:
+        flash("Session not found.", "danger")
+        return redirect('/admin/sessions')
+
+    # Get all students in the batch, ordered by their roll number
+    cursor.execute("""
+        SELECT 
+            sd.std_id, 
+            sd.std_rollno, 
+            sd.std_name, 
+            sd.std_email, 
+            sa.login_time, 
+            sa.logout_time 
+        FROM student_details sd
+        LEFT JOIN student_attendance sa 
+            ON sd.std_id = sa.std_id AND sa.s_id = %s
+        WHERE sd.bat_id = (
+            SELECT c.bat_id
+            FROM session_details s
+            JOIN course_details c ON s.course_id = c.course_id
+            WHERE s.s_id = %s
+        )
+        ORDER BY sd.std_rollno
+    """, (s_id, s_id))
+    students = cursor.fetchall()
+
+    conn.close()
+
+    # Generate PDF
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    pdf.setTitle("Attendance Report")
+    pdf.drawString(100, height - 100, f"Attendance Report for {session_details['course_name']}")
+    pdf.drawString(100, height - 120, f"Date: {session_details['s_date']}")
+    pdf.drawString(100, height - 140, f"Batch: {session_details['bat_name']}")
+    pdf.drawString(100, height - 160, "Student Attendance:")
+
+    # Add table headers
+    pdf.drawString(100, height - 180, "Roll No")
+    pdf.drawString(200, height - 180, "Name")
+    pdf.drawString(300, height - 180, "Login Time")
+    pdf.drawString(400, height - 180, "Logout Time")
+
+    # Add student attendance data
+    y_position = height - 200
+    for student in students:
+        pdf.drawString(100, y_position, student['std_rollno'])
+        pdf.drawString(200, y_position, student['std_name'])
+        pdf.drawString(300, y_position, str(student['login_time']) if student['login_time'] else "Absent")
+        pdf.drawString(400, y_position, str(student['logout_time']) if student['logout_time'] else "Absent")
+        y_position -= 20  # Move down for the next student
+
+    pdf.showPage()
+    pdf.save()
+
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name="attendance_report.pdf", mimetype='application/pdf')
 
 
 @app.route('/admin/batches')
@@ -639,7 +722,9 @@ def delete_session(session_id):
         flash(f"Error deleting session: {str(e)}", "danger")
     finally:
         conn.close()
+   
     return redirect('/admin/sessions')
+
 
 @app.route('/admin/session/<int:s_id>/attendance')
 def view_attendance(s_id):
@@ -690,11 +775,16 @@ def view_attendance(s_id):
 
     conn.close()
 
+    # Include a link to generate the PDF for this session
+    attendance_pdf_url = url_for('generate_attendance_pdf', s_id=s_id)
+
     return render_template(
         'admin/attendance_view.html', 
         session=session_details, 
-        students=students
+        students=students,
+        attendance_pdf_url=attendance_pdf_url
     )
+
 
 
 if __name__ == '__main__':
