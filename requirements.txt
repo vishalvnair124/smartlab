@@ -3,3 +3,4 @@ pip install customtkinter
 pip install pillow
 pip install flask
 pip install flask mysql-connector-python
+pip install reportlab

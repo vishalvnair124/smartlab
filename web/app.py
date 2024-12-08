@@ -1,7 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file,session
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 import io
+from flask import send_file
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Table, TableStyle
 import mysql.connector
 
 
@@ -14,7 +18,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'smartlab1',
+    'database': 'smartlab',
 }
 
 # Function to connect to the database
@@ -296,37 +300,58 @@ def generate_attendance_pdf(s_id):
 
     conn.close()
 
-    # Generate PDF
+
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-    pdf.setTitle("Attendance Report")
-    pdf.drawString(100, height - 100, f"Attendance Report for {session_details['course_name']}")
-    pdf.drawString(100, height - 120, f"Date: {session_details['s_date']}")
-    pdf.drawString(100, height - 140, f"Batch: {session_details['bat_name']}")
-    pdf.drawString(100, height - 160, "Student Attendance:")
 
-    # Add table headers
-    pdf.drawString(100, height - 180, "Roll No")
-    pdf.drawString(200, height - 180, "Name")
-    pdf.drawString(300, height - 180, "Login Time")
-    pdf.drawString(400, height - 180, "Logout Time")
-
-    # Add student attendance data
-    y_position = height - 200
+    # Title
+    title = f"ATTENDANCE REPORT" 
+    pdf.setTitle(title)
+    title_width = pdf.stringWidth(title, "Helvetica", 12)
+    pdf.drawString((width - title_width) / 2, height - 80, title)
+    
+    # Session details
+    course=f"Subjecjt: {session_details['course_name']}"
+    s_date = f"Date: {session_details['s_date']}"
+    time = f"Time: {session_details['s_start_time']} - {session_details['s_end_time']}"
+    batch = f"Batch: {session_details['bat_name']}"
+    pdf.drawString(100, height - 160, time)
+    pdf.drawString(100, height - 120, course)
+    pdf.drawString(100, height - 140, s_date)
+    pdf.drawString(100, height - 180, batch)
+    
+    # Student attendance table
+    data = [["Roll No", "Name", "Login Time", "Logout Time"]]
     for student in students:
-        pdf.drawString(100, y_position, student['std_rollno'])
-        pdf.drawString(200, y_position, student['std_name'])
-        pdf.drawString(300, y_position, str(student['login_time']) if student['login_time'] else "Absent")
-        pdf.drawString(400, y_position, str(student['logout_time']) if student['logout_time'] else "Absent")
-        y_position -= 20  # Move down for the next student
+        row = [
+            student['std_rollno'],
+            student['std_name'],
+            str(student['login_time']) if student['login_time'] else "Absent",
+            str(student['logout_time']) if student['logout_time'] else "Absent"
+        ]
+        data.append(row)
+    
+    table = Table(data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 1.5*inch])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    
+    # Wrap the table in a story list and draw on the canvas
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, 100, height - 220 - len(students) * 20)
 
     pdf.showPage()
     pdf.save()
 
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="attendance_report.pdf", mimetype='application/pdf')
-
 
 @app.route('/admin/batches')
 def batches():
