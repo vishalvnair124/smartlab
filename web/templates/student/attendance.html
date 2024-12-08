@@ -6,30 +6,56 @@
   <title>Attendance View</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance.css') }}">
 </head>
+<style>
+  .std_header{
+    display:flex;
+    justify-content: space-evenly;
+    margin: 10px 0px;
+    font-size: 1.3rem;
+  }
+  
+  .containerNew{
+    padding: 20px;
+  }
+
+</style>
 <body>
-  <div form action="/attendance/{{ student_id }}" method = "POST"  class="container">
+  <div class="container containerNew">
     <header class="header">
       <h1>Attendance View</h1>
     </header>
     <main>
-      <table>
+      <table style = "text-align: center">
         <thead>
           <tr>
-            <th>Roll Number</th>
-            <th>Name</th>
             <th>Date</th>
-            <th>Status</th>
+            <th>Course Name</th>
+            <th>Session Start Time</th>
+            <th>Session End Time</th>
+            <th>Student Login </th>
+            <th>Student Logout </th>
+            <th>Attendance </th>
           </tr>
         </thead>
         <tbody>
-          <h3>Attendance Data: {{ attendance | tojson }}</h3>
+          <div class="std_header">
+            {% for record in attendance %}
+            <div>Name: {{record.std_name}}</div>
+            <div>Roll No: {{ record.std_rollno}}</div>
+            <div>Batch: {{record.bat_name}}</div>
+            {% endfor %}
+          </div>
+          <!-- <h3>Attendance Data: {{ attendance | tojson }}</h3> -->
           {% if attendance %}
           {% for record in attendance %}
               <tr>
-                  <td>{{ record.att_id }}</td>
-                  <td>{{ record.std_name }}</td>
-                  <td>{{ record.login_time }}</td>
-                  <td>{{ record.logout_time }}</td>
+                <td>{{ record.s_date }}</td>
+                <td>{{ record.course_name }}</td>
+                <td>{{ record.s_start_time }}</td>
+                <td>{{ record.s_end_time}}</td>
+                <td>{{ record.login_time }}</td>
+                <td>{{ record.logout_time }}</td>
+                <td>{{ record.make_attendance}}</td>
               </tr>
           {% endfor %}
       {% else %}
