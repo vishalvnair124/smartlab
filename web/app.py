@@ -1,7 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file,session
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+<<<<<<< HEAD
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib.units import inch
+=======
 import io
+>>>>>>> f23abc279fae91440769a485b0f1ae1bcc57d074
 import mysql.connector
 from datetime import timedelta
 
@@ -420,6 +425,65 @@ def generate_attendance_pdf(s_id):
     pdf.drawString(100, height - 140, f"Batch: {session_details['bat_name']}")
     pdf.drawString(100, height - 160, "Student Attendance:")
 
+<<<<<<< HEAD
+    # Title
+    title = "ATTENDANCE REPORT"
+    pdf.setTitle(title)
+    title_width = pdf.stringWidth(title, "Helvetica", 12)
+    pdf.drawString((width - title_width) / 2, height - 60, title)
+
+    # Session details
+    course = f"Subject: {session_details['course_name']}"
+    s_date = f"Date: {session_details['s_date']}"
+    time = f"Time: {session_details['s_start_time']} - {session_details['s_end_time']}"
+    batch = f"Batch: {session_details['bat_name']}"
+
+    # Define margin_right
+    margin_right = 50
+
+    # Calculate widths for right alignment
+    s_date_width = pdf.stringWidth(s_date, "Helvetica", 12)
+    time_width = pdf.stringWidth(time, "Helvetica", 12)
+
+    # Draw left-aligned text
+    pdf.drawString(50, height - 100, course)
+    pdf.drawString(50, height - 120, batch)
+
+    # Draw right-aligned text
+    pdf.drawString(width - s_date_width - margin_right, height - 100, s_date)
+    pdf.drawString(width - time_width - margin_right, height - 120, time)
+    
+    
+    # Student attendance table
+    data = [["Roll No", "Name", "Login Time", "Logout Time"]]
+    for student in students:
+        row = [
+            student['std_rollno'],
+            student['std_name'],
+            str(student['login_time']) if student['login_time'] else "Absent",
+            str(student['logout_time']) if student['logout_time'] else "Absent"
+        ]
+        data.append(row)
+    
+    table = Table(data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 1.5*inch])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+
+    # Calculate the total width of the table
+    table_width = 6.5 * inch  # Sum of colWidths: 1.5 + 2 + 1.5 + 1.5 inches
+    x_position = (width - table_width) / 2  # Center the table
+
+    # Wrap the table in a story list and draw on the canvas
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, x_position, height - 170 - len(students) * 20)
+=======
     # Add table headers
     pdf.drawString(100, height - 180, "Roll No")
     pdf.drawString(200, height - 180, "Name")
@@ -434,6 +498,7 @@ def generate_attendance_pdf(s_id):
         pdf.drawString(300, y_position, str(student['login_time']) if student['login_time'] else "Absent")
         pdf.drawString(400, y_position, str(student['logout_time']) if student['logout_time'] else "Absent")
         y_position -= 20  # Move down for the next student
+>>>>>>> f23abc279fae91440769a485b0f1ae1bcc57d074
 
     pdf.showPage()
     pdf.save()
