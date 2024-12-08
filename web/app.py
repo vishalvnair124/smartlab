@@ -164,7 +164,6 @@ def user_verification(student_id):
 
 
 
-
 @app.route('/student/attendance/<int:student_id>', methods=['GET'])
 def attendance(student_id):
     try:
