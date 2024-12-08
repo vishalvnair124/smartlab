@@ -89,17 +89,12 @@
       width: 50px;
     }
 
-    .box_style{
-    display: flex;
-    justify-content: center;
-    margin-top:1rem;
-    }
-
     .logout {
       display: flex;
       justify-content: flex-end;
+      /* Aligns to the right */
       margin-right: 2rem;
-      padding: 0 10px;
+      /* Optional: Adds some padding from the edge */
     }
 
     .logout i {
@@ -107,18 +102,11 @@
       cursor: pointer;
       /* Default color */
       transition: color 0.3s ease;
-      padding-bottom: 1rem;
+      padding-bottom: 5rem;
     }
 
     .logout i:hover:active {
       color: rgb(255, 0, 17);
-    }
-
-    .std_log{
-      display:flex;
-      justify-content: flex-end;
-      margin:1rem
-      align-item:center;
     }
 
     /* Style for flashed messages */
@@ -224,7 +212,6 @@
   </div>
   <div class="container dashboard-container">
     <h1 class="dashboard-title">Student Dashboard</h1>
-  <div class = "std_log">
     {% if session['user_type'] == 'student' %}
     <h5 class="text-center">Welcome, {{ session['student_name'] }}</h5>
     {% endif %}
@@ -233,15 +220,13 @@
         <i class="fa-solid fa-right-from-bracket"> </i>
       </a>
     </div>
-  </div>
-   
-    <div class="row g-4 box_style">
+    <div class="row g-4">
       <!-- Courses Box -->
       <div class="col-md-6 col-lg-3">
         <div class="dashboard-card courses text-center">
-          <a href="#" class="card-link">
           <div class="card-icon mb-2">📘</div>
-          <h4>Courses</h4>
+          <a href="" class="card-link">
+            <h4>Courses</h4>
           </a>
           <div class="card-count"></div>
         </div>
@@ -249,10 +234,9 @@
       <!-- Attendance Box -->
       <div class="col-md-6 col-lg-3">
         <div class="dashboard-card students text-center">
-          <a href="attendance/{{student_id}}" class="card-link"> 
-            <div class="card-icon mb-2"><img class="img-fluid attendance-img"
+          <div class="card-icon mb-2"><img class="img-fluid attendance-img"
               src="https://cdn-icons-png.flaticon.com/512/3589/3589030.png" alt=""></div>
-          </a>
+          <a href="/attendance" class="card-link">
             <h4>Attendance
             </h4>
           </a>
@@ -262,10 +246,10 @@
        <!-- Profile Box -->
       <div class="col-md-6 col-lg-3">
         <div class="dashboard-card profile text-center">
-          <a href="profile/{{student_id}}" class="card-link">
           <div class="card-icon mb-2"><i class="fa-solid fa-user"></i></div>
+          <a href="/profile" class="card-link">
             <h4>Profile</h4>
-        </a>
+          </a>
           <div class="card-count"></div>
         </div>
       </div>
