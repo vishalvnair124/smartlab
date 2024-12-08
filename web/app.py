@@ -1,13 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file,session
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-<<<<<<< HEAD
-from reportlab.platypus import Table, TableStyle
-from reportlab.lib.units import inch
-=======
 import io
->>>>>>> f23abc279fae91440769a485b0f1ae1bcc57d074
 import mysql.connector
+
 from datetime import timedelta
 
 
@@ -256,19 +252,16 @@ def reset_password():
 # }
 
 
-@app.route('/student/dashboard/attendance/<int:student_id>', methods=['GET'])
-def attendance(student_id):
-    if 'user_type' not in session or session['user_type'] != 'student' or session.get('student_id') != student_id:
-        # If the user is not logged in or the session does not match the student ID
+@app.route('/student/attendance', methods=['GET'])
+def attendance():
+    student_id = session.get('student_id')
+    if session.get('user_type') != 'student':
         flash('You must be logged in as a student to access the dashboard.', 'error')
         return redirect("/")  # Redirect to login page if not logged in as a student
-    try:
-        # Establish a database connection using context manager
-        with get_db_connection() as conn:
-            cursor = conn.cursor(dictionary=True)
-            
-            # Correct the SQL query by removing the redundant column
-            query = '''
+
+    conn = get_db_connection() 
+    cursor = conn.cursor(dictionary=True)
+    query = '''
             SELECT 
                 sa.*, 
                 sd.std_name,  
@@ -280,7 +273,6 @@ def attendance(student_id):
                 ss.s_end_time,
                 cc.course_name,
                 bb.bat_name
-                
             FROM student_attendance sa
             JOIN student_details sd ON sa.std_id = sd.std_id
             JOIN session_details ss ON sa.s_id = ss.s_id
@@ -289,31 +281,19 @@ def attendance(student_id):
             WHERE sa.std_id = %s
             '''
             
-            # Execute the query with the provided student_id
-            cursor.execute(query, (student_id,))
-            attendance = cursor.fetchall()  # Fetch all records for the student
+    cursor.execute(query, (student_id,))
+    attendance = cursor.fetchall()
+
+    if not attendance:
+        return render_template('student/attendance.html', attendance=None, message="No attendance records found.")
             
-            # Debugging: print the attendance data
-            print("Attendance Data:", attendance)
+    for record in attendance:
+        if isinstance(record['s_start_time'], timedelta):
+            record['s_start_time'] = str(record['s_start_time'])
+        if isinstance(record['s_end_time'], timedelta):
+            record['s_end_time'] = str(record['s_end_time'])
 
-            if not attendance:
-                # Handle the case when no attendance data is found
-                print("No data found for std_id:", student_id)
-                
-            # Process time fields, if applicable
-            for record in attendance:
-                # If the start time or end time is a timedelta object, convert it
-                if isinstance(record['s_start_time'], timedelta):
-                    record['s_start_time'] = str(record['s_start_time'])  # Or format it as needed
-                if isinstance(record['s_end_time'], timedelta):
-                    record['s_end_time'] = str(record['s_end_time'])  # Or format it as needed
-
-        # Render the template and pass the attendance data
-        return render_template('student/attendance.html', attendance=attendance)
-
-    except Exception as e:
-        print(f"Error fetching attendance data: {e}")
-        return render_template('error.html', message="There was an error fetching attendance data.")
+    return render_template('student/attendance.html', attendance=attendance)
 
 
 
@@ -323,7 +303,7 @@ def student_dashboard(student_id):
     if 'user_type' not in session or session['user_type'] != 'student' or session.get('student_id') != student_id:
         # If the user is not logged in or the session does not match the student ID
         flash('You must be logged in as a student to access the dashboard.', 'error')
-        return redirect("/")  # Redirect to login page if not logged in as a student
+        return redirect(url_for('login'))  # Redirect to login page if not logged in as a student
     # Fetch student-specific data if required using the student_id
     return render_template('student/dashboard.html', student_id=student_id)
 
@@ -336,7 +316,7 @@ def student_dashboard(student_id):
 def admin_dashboard():
     if 'user_type' not in session or session['user_type'] != 'admin':
         flash('You must be logged in as an admin to access this page.', 'error')
-        return redirect('/')  # Redirect to the login page if not admin
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
     
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -426,65 +406,6 @@ def generate_attendance_pdf(s_id):
     pdf.drawString(100, height - 140, f"Batch: {session_details['bat_name']}")
     pdf.drawString(100, height - 160, "Student Attendance:")
 
-<<<<<<< HEAD
-    # Title
-    title = "ATTENDANCE REPORT"
-    pdf.setTitle(title)
-    title_width = pdf.stringWidth(title, "Helvetica", 12)
-    pdf.drawString((width - title_width) / 2, height - 60, title)
-
-    # Session details
-    course = f"Subject: {session_details['course_name']}"
-    s_date = f"Date: {session_details['s_date']}"
-    time = f"Time: {session_details['s_start_time']} - {session_details['s_end_time']}"
-    batch = f"Batch: {session_details['bat_name']}"
-
-    # Define margin_right
-    margin_right = 50
-
-    # Calculate widths for right alignment
-    s_date_width = pdf.stringWidth(s_date, "Helvetica", 12)
-    time_width = pdf.stringWidth(time, "Helvetica", 12)
-
-    # Draw left-aligned text
-    pdf.drawString(50, height - 100, course)
-    pdf.drawString(50, height - 120, batch)
-
-    # Draw right-aligned text
-    pdf.drawString(width - s_date_width - margin_right, height - 100, s_date)
-    pdf.drawString(width - time_width - margin_right, height - 120, time)
-    
-    
-    # Student attendance table
-    data = [["Roll No", "Name", "Login Time", "Logout Time"]]
-    for student in students:
-        row = [
-            student['std_rollno'],
-            student['std_name'],
-            str(student['login_time']) if student['login_time'] else "Absent",
-            str(student['logout_time']) if student['logout_time'] else "Absent"
-        ]
-        data.append(row)
-    
-    table = Table(data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 1.5*inch])
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-    ]))
-
-    # Calculate the total width of the table
-    table_width = 6.5 * inch  # Sum of colWidths: 1.5 + 2 + 1.5 + 1.5 inches
-    x_position = (width - table_width) / 2  # Center the table
-
-    # Wrap the table in a story list and draw on the canvas
-    table.wrapOn(pdf, width, height)
-    table.drawOn(pdf, x_position, height - 170 - len(students) * 20)
-=======
     # Add table headers
     pdf.drawString(100, height - 180, "Roll No")
     pdf.drawString(200, height - 180, "Name")
@@ -499,7 +420,6 @@ def generate_attendance_pdf(s_id):
         pdf.drawString(300, y_position, str(student['login_time']) if student['login_time'] else "Absent")
         pdf.drawString(400, y_position, str(student['logout_time']) if student['logout_time'] else "Absent")
         y_position -= 20  # Move down for the next student
->>>>>>> f23abc279fae91440769a485b0f1ae1bcc57d074
 
     pdf.showPage()
     pdf.save()
