@@ -14,7 +14,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'smartlab1',
+    'database': 'smartlab',
 }
 
 # Function to connect to the database
