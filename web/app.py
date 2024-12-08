@@ -10,8 +10,6 @@ import mysql.connector
 from datetime import timedelta
 
 
-
-
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
@@ -164,8 +162,12 @@ def user_verification(student_id):
 
 
 
-@app.route('/student/attendance/<int:student_id>', methods=['GET'])
+@app.route('/student/dashboard/attendance/<int:student_id>', methods=['GET'])
 def attendance(student_id):
+    if 'user_type' not in session or session['user_type'] != 'student' or session.get('student_id') != student_id:
+      # If the user is not logged in or the session does not match the student ID
+      flash('You must be logged in as a student to access the dashboard.', 'error')
+      return redirect(url_for('login'))  # Redirect to login page if not logged in as a student
     try:
         # Establish a database connection using context manager
         with get_db_connection() as conn:
