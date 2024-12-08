@@ -162,8 +162,6 @@ def attendance(student_id):
     # You can add logic here to fetch student-specific attendance details
     return render_template('student/attendance.html',attendance=session_details)
 
-
-
 # # student profile
 # # Mock student data
 # student_data = {
@@ -176,12 +174,12 @@ def attendance(student_id):
 #     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
 # }
 
-# @app.route("/profile")
+# @app.route("/student/profile")
 # def profile():
 #     """Render the profile page."""
 #     return render_template("/student/profile.html", student=student_data)
 
-# # profile updates
+# profile updates
 # @app.route("/profile_update", methods=["GET", "POST"])
 # def update_profile():
 #     """Render and process the profile update form."""
@@ -212,6 +210,10 @@ def student_dashboard(student_id):
 # Admin dashboard 
 @app.route('/admin/dashboard')
 def admin_dashboard():
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
