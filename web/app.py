@@ -14,7 +14,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'smartlab1',
+    'database': 'smartlab',
 }
 
 # Function to connect to the database
@@ -44,7 +44,7 @@ def login():
                 return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
             # Check if the user is a student
-            cursor.execute("SELECT * FROM admin WHERE admin_email=%s AND admin_passwd=%s", (email, password))
+            cursor.execute("SELECT * FROM  student_details WHERE std_email=%s AND std_passwd=%s", (email, password))  # Corrected table and column names
             student = cursor.fetchone()
 
             if student:  # Redirect to the student dashboard
