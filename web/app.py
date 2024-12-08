@@ -44,10 +44,7 @@ def login():
                 return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
 
             # Check if the user is a student
-<<<<<<< HEAD
             # Check if the user is a student
-=======
->>>>>>> 9da08b53f4fe98f2057a3d71ef6ab27918765b29
             cursor.execute("SELECT * FROM  student_details WHERE std_email=%s AND std_passwd=%s", (email, password))  # Corrected table and column names
             student = cursor.fetchone()
 
