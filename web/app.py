@@ -233,22 +233,36 @@ def reset_password():
     flash('Unauthorized access.', 'error')
     return redirect(url_for('login'))
 
-# # #! attendance
-# @app.route('/attendance')
-# def attendance():
-#     # You can add logic here to fetch student-specific attendance details
-#     return render_template('student/attendance.html')
-# # student profile
-# # Mock student data
-# student_data = {
-#     "name": "Alice Johnson",
-#     "email": "alice.johnson@example.com",
-#     "roll_number": "CS2024001",
-#     "department": "Computer Science",
-#     "device": "Laptop",
-#     "session": "2023-2024",
-#     "courses": ["Programming Fundamentals", "Database Management", "Web Development"]
-# }
+
+
+@app.route('/student/course')
+def student_course():
+    student_id = session.get('student_id')
+    # if session.get('user_type') != 'student':
+    #     flash('You must be logged in as a student to access the dashboard.', 'error')
+    #     return redirect("/")  # Redirect to login page if not logged in as a student
+
+    conn = get_db_connection() 
+    cursor = conn.cursor(dictionary=True)
+    
+    query = '''
+            SELECT 
+                sd.*,
+                bd.bat_name,
+                cd.course_name,
+                cd.course_id
+            FROM student_details sd
+            JOIN batch_details bd ON sd.bat_id = bd.bat_id
+            JOIN course_details cd ON bd.bat_id = cd.bat_id
+            WHERE sd.std_id = %s
+            '''
+            
+    cursor.execute(query, (student_id,))
+    course = cursor.fetchall()
+
+
+    return render_template('student/course.html', course=course)
+
 
 
 @app.route('/student/attendance', methods=['GET'])
@@ -346,6 +360,7 @@ def admin_dashboard():
         students_count=students_count,
         devices_count=devices_count
     )
+    
 @app.route('/admin/session/<int:s_id>/attendance_view/pdf')
 def generate_attendance_pdf(s_id):
     conn = get_db_connection()

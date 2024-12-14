@@ -79,11 +79,13 @@
           </thead>
           <tbody>
             <div class="std_header">
+              {% if attendance %}
               {% for record in attendance %}
               <div>Name: {{record.std_name}}</div>
               <div>Roll No: {{ record.std_rollno}}</div>
               <div>Batch: {{record.bat_name}}</div>
               {% endfor %}
+              {% endif %}
             </div>
             <!-- <h3>Attendance Data: {{ attendance | tojson }}</h3> -->
             {% if attendance %} {% for record in attendance %}
