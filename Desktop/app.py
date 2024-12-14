@@ -1,6 +1,7 @@
 from customtkinter import *
 from PIL import Image
 import uuid
+import requests
 
 
 
@@ -10,7 +11,9 @@ app.geometry("600x480")
 app.iconbitmap("./attendance.ico")
 app.title("SmartLab")
 
-invalid_var = BooleanVar(value=False) 
+invalid_var = BooleanVar(value=False)
+global invalid_text 
+invalid_text = "Invalid credintial"
 
 # Load Images
 side_img_data = Image.open("side-img.png")
@@ -50,13 +53,61 @@ def send_logout(response_from):
               }
     return respons
 
-def device_registration(email,password):
-    mac_add = get_mac_address()
-    print(email,password,mac_add)
-    response = {
-               "response":200
-              }
-    return response
+
+
+def device_registration(email, password):
+    global invalid_text
+    mac_add = get_mac_address()  # Assuming this function fetches the MAC address
+    print(f"Sending registration for {email} with MAC address: {mac_add}")
+    
+    # Prepare data to be sent in the POST request
+    data = {
+        'email': email,
+        'password': password,
+        'mac_address': mac_add
+    }
+    
+    try:
+        # Send a POST request with the email, password, and MAC address as JSON data
+        response = requests.post("http://127.0.0.1:5000/device_registration", json=data)
+        
+        # Log the response from the server for debugging purposes
+        print(f"Server response: {response.text}")
+        
+        # Check if the response status code is 200 (OK)
+        if response.status_code == 200:
+            return response.json()  # Return the JSON response if successful
+        elif response.status_code == 500:
+            print(f"Failed with status code {response.status_code}")
+            invalid_text = "Already Registered!"  # Update invalid text
+            invalid_var.set(True)  # Trigger UI update
+            return {"response": response.status_code, "message": response.text}
+        elif response.status_code == 404:
+            print(f"Failed with status code {response.status_code}")
+            invalid_text = "Invalid credintial"  # Update invalid text
+            invalid_var.set(True)  # Trigger UI update
+            return {"response": response.status_code, "message": response.text}    
+        else:
+            print(f"Failed with status code {response.status_code}")
+            invalid_text = "Registration Failed!"  # Update invalid text
+            invalid_var.set(True)  # Trigger UI update
+            return {"response": response.status_code, "message": response.text}
+    except requests.exceptions.RequestException as e:
+        # This will catch any network-related errors, such as connection timeouts, etc.
+        invalid_text = "Registration Failed!"  # Update invalid text
+        invalid_var.set(True)  # Trigger UI update
+        print(f"Error making the request: {e}")
+        return {"response": 500, "message": f"Request exception: {str(e)}"}
+    
+    except Exception as e:
+        # This will catch any other exceptions
+        print(f"Unexpected error: {e}")
+        invalid_text = f"Unexpected error: {str(e)}"  # Update invalid text
+        invalid_var.set(True)  # Trigger UI update
+        return {"response": 500, "message": f"Unexpected error: {str(e)}"}
+
+
+
 
 # Function to Replace the Right Frame
 def on_login_click(email_entry, password_entry, session_entry):
@@ -68,6 +119,9 @@ def on_login_click(email_entry, password_entry, session_entry):
        response = device_registration(email,password)
        if response["response"] == 200:
            display_registred()
+       else:
+           invalid_var.set(True)
+           display_login_form()
     else:
         response = send_login(email, password, session)
         if response["response"] == 200:
@@ -156,7 +210,7 @@ def display_login_form():
         command=lambda: on_login_click(email_entry, password_entry, session_entry)  # Use lambda to pass the entry widgets
     ).pack(anchor="w", pady=(40, 0), padx=(25, 0))
 
-    label = CTkLabel(master=right_panel, text="Invalid credintial",anchor="w", justify="left", text_color="#601E88",font=("Arial Bold", 15,))
+    label = CTkLabel(master=right_panel, text=invalid_text,anchor="w", justify="left", text_color="#601E88",font=("Arial Bold", 15,))
     if invalid_var.get() :
         label.pack(anchor="w",pady=(10,0),padx=(75, 0))
     else :
