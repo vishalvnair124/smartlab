@@ -61,18 +61,6 @@
       .card-link:hover {
         text-decoration: underline;
       }
-      .logout{
-        display: flex;
-        justify-content:flex-end;
-  }
-  .logout i{
-   margin-left: 60rem;
-   margin-bottom: 2rem;
-   cursor: pointer;
-  }
-  .logout i:hover:active{
-    color: rgb(255, 0, 17);
-  }
 
   /* Style for flashed messages */
       .flash_div {
@@ -156,9 +144,75 @@
         opacity: 0;
     }
 
+    .logout {
+      display: flex;
+      justify-content: flex-end;
+      /* Aligns to the right */
+      padding: 0 10px;
+    }
+
+    .logout i {
+      font-size: 1.2rem;
+      cursor: pointer;
+      /* Default color */
+      transition: all 0.7s ease;
+      padding-bottom: 1rem;
+      color: #007bff;
+
+    }
+
+    .logout i:hover{
+      color: rgb(255, 0, 17);
+      transform: scale(1.3);
+    }
+
+
+    .row_new{
+      display: flex;
+      justify-content: center;
+      }
+
+      .card-link {
+        text-decoration: none; 
+      }
+    
+    .card-link:hover {
+        text-decoration: none; 
+    }
+    
+    .attendance-img {
+      height: 50px;
+      width: 50px;
+    }
+
+       
+    .logout {
+      display: flex;
+      justify-content: flex-end;
+      /* Aligns to the right */
+      margin-right: 2rem;
+      padding: 0 10px;
+    }
+
+    .logout i {
+      font-size: 1.2rem;
+      cursor: pointer;
+      /* Default color */
+      transition: all 0.7s ease;
+      padding-bottom: 1rem;
+      color: #007bff;
+
+    }
+
+    .logout i:hover{
+      color: rgb(255, 0, 17);
+      transform: scale(1.3);
+    }
+
     </style>
   </head>
   <body>
+
     <div class="flash_div">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -173,62 +227,67 @@
       {% endwith %}
     </div>
     <div class="container dashboard-container">
-      <h1 class="dashboard-title">Admin Dashboard</h1>
       <div class="logout" >
         <a href="/logout"  > 
         <i class="fa-solid fa-right-from-bracket">  </i>
         </a>
       </div>
-      <div class="row g-4">
+      <h1 class="dashboard-title">Admin Dashboard</h1>
+      <div class="row g-4 row_new">
         <!-- Courses Box -->
         <div class="col-md-6 col-lg-3">
+          <a href="/admin/courses" class="card-link">
           <div class="dashboard-card courses text-center">
-            <div class="card-icon mb-2">📘</div>
-            <a href="/admin/courses" class="card-link">
+            <div class="card-icon mb-2"><img class="img-fluid attendance-img"
+              src="https://cdn-icons-png.flaticon.com/512/16811/16811637.png" alt=""></div>
               <h4>Courses</h4>
-            </a>
-            <div class="card-count">{{ courses_count }}</div>
-          </div>
+              <div class="card-count">{{ courses_count }}</div>
+            </div>
+          </a>
         </div>
         <!-- Batches Box -->
         <div class="col-md-6 col-lg-3">
+          <a href="/admin/batches" class="card-link">
           <div class="dashboard-card batches text-center">
-            <div class="card-icon mb-2">🎓</div>
-            <a href="/admin/batches" class="card-link">
+            <div class="card-icon mb-2"><img class="img-fluid attendance-img"
+              src="https://cdn-icons-png.flaticon.com/512/16812/16812214.png" alt=""></div>
               <h4>Batches</h4>
-            </a>
-            <div class="card-count">{{ batches_count }}</div>
-          </div>
+              <div class="card-count">{{ batches_count }}</div>
+            </div>
+          </a>
         </div>
         <!-- Sessions Box -->
         <div class="col-md-6 col-lg-3">
+          <a href="/admin/sessions" class="card-link">
           <div class="dashboard-card sessions text-center">
-            <div class="card-icon mb-2">🕒</div>
-            <a href="/admin/sessions" class="card-link">
+            <div class="card-icon mb-2"><img class="img-fluid attendance-img"
+              src="https://cdn-icons-png.flaticon.com/512/16811/16811414.png" alt=""></div>
               <h4>Sessions</h4>
-            </a>
-            <div class="card-count">{{ sessions_count }}</div>
-          </div>
+              <div class="card-count">{{ sessions_count }}</div>
+            </div>
+          </a>
         </div>
         <!-- Students Box -->
         <div class="col-md-6 col-lg-3">
+          <a href="/admin/students" class="card-link">
           <div class="dashboard-card students text-center">
-            <div class="card-icon mb-2">👩‍🎓👨‍🎓</div>
-            <a href="/admin/students" class="card-link">
+            <div class="card-icon mb-2"><img class="img-fluid attendance-img"
+              src="https://cdn-icons-png.flaticon.com/512/16811/16811541.png" alt=""></div>
               <h4>Students</h4>
-            </a>
-            <div class="card-count">{{ students_count }}</div>
-          </div>
+              <div class="card-count">{{students_count }}</div>
+            </div>
+          </a>
         </div>
         <!-- Devices Box -->
         <div class="col-md-6 col-lg-3">
+          <a href="/admin/devices" class="card-link">
           <div class="dashboard-card devices text-center">
-            <div class="card-icon mb-2">💻</div>
-            <a href="/admin/devices" class="card-link">
+            <div class="card-icon mb-2"><img class="img-fluid attendance-img"
+              src="https://cdn-icons-png.flaticon.com/512/16812/16812077.png" alt=""></div>
               <h4>Devices</h4>
-            </a>
-            <div class="card-count">{{ devices_count }}</div>
-          </div>
+              <div class="card-count">{{devices_count }}</div>
+            </div>
+          </a>
         </div>
       </div>
     </div>
