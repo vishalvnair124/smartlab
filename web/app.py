@@ -3,7 +3,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
 import mysql.connector
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 
 
@@ -953,6 +953,100 @@ def device_registration():
         cursor.close()
         conn.close()
 
+
+
+
+@app.route('/slogin', methods=['POST'])
+def slogin():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    session_id = data.get('session')
+    mac_address = data.get('mac_address')
+
+    try:
+        # Step 1: Connect to the database
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Step 2: Validate student credentials
+        student_query = """
+            SELECT std_id, std_name, std_email 
+            FROM student_details 
+            WHERE std_email = %s AND std_passwd = %s AND std_status = 1
+        """
+        cursor.execute(student_query, (email, password))
+        student = cursor.fetchone()
+
+        if not student:
+            conn.close()
+            return jsonify({"response": 401, "message": "Invalid credentials or inactive student"}), 401
+
+        # Step 3: Validate device MAC address and status
+        device_query = """
+            SELECT device_id 
+            FROM device_details
+            WHERE device_mac = %s AND device_status = 1
+        """
+        cursor.execute(device_query, (mac_address,))
+        device = cursor.fetchone()
+
+        if not device:
+            conn.close()
+            return jsonify({"response": 403, "message": "Unauthorized device or inactive"}), 403
+
+        # Step 4: Validate session
+        session_query = """
+            SELECT s_id, make_attendance, TIME(s_end_time) AS session_end 
+            FROM session_details
+            WHERE s_id = %s AND s_date = CURDATE() 
+              AND s_start_time <= TIME(NOW()) AND s_end_time >= TIME(NOW())
+        """
+        cursor.execute(session_query, (session_id,))
+        session = cursor.fetchone()
+
+        if not session:
+            conn.close()
+            return jsonify({"response": 404, "message": "Invalid or inactive session"}), 404
+
+        # Step 5: Check for existing attendance record
+        attendance_check_query = """
+            SELECT * FROM student_attendance 
+            WHERE std_id = %s AND s_id = %s AND DATE(login_time) = CURDATE()
+        """
+        cursor.execute(attendance_check_query, (student['std_id'], session_id))
+        existing_attendance = cursor.fetchone()
+
+        # If attendance already exists, we skip insertion but still return the session info
+        if not existing_attendance:
+            # Step 6: Mark attendance if `make_attendance` is 1
+            if session['make_attendance'] == 1:
+                attendance_query = """
+                    INSERT INTO student_attendance (std_id, s_id, login_time)
+                    VALUES (%s, %s, %s)
+                """
+                cursor.execute(attendance_query, (student['std_id'], session_id, datetime.now()))
+                conn.commit()
+
+        # Step 7: Return response with session end time
+        conn.close()
+
+        # If session_end is a timedelta or datetime object, convert it to a string
+        if isinstance(session['session_end'], datetime):
+            session_end_str = session['session_end'].strftime('%H:%M:%S')
+        else:
+            session_end_str = str(session['session_end'])
+
+        return jsonify({
+            "response": 200,
+            "session_end": session_end_str,  # Returning session_end as HH:MM:SS string
+            "name": student['std_name'],
+            "email": student['std_email']
+        })
+
+    except Exception as e:
+        print(f"Error during login: {e}")
+        return jsonify({"response": 500, "message": "Internal server error"}), 500
 
 
 
