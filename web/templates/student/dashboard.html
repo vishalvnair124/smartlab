@@ -88,28 +88,34 @@
         height: 50px;
         width: 50px;
       }
-
-    .logout {
-      display: flex;
-     
-      justify-content: flex-end;
-      /* Aligns to the right */
-      margin-right: 2rem;
-      padding: 0px 20px;
-    }
-
-    .logout i {
-      font-size: 1.2rem;
-      cursor: pointer;
-      /* Default color */
-      transition: color 0.3s ease;
-      padding-bottom: 1rem;
-    }
-
-      .logout i:hover:active {
-        color: rgb(255, 0, 17);
+      .logout {
+        display: flex;
+        justify-content: flex-end;
+        /* Aligns to the right */
+        margin-right: 2rem;
+        padding: 0 10px;
       }
-
+  
+      .logout i {
+        font-size: 1.2rem;
+        cursor: pointer;
+        /* Default color */
+        transition: all 0.7s ease;
+        padding-bottom: 1rem;
+        color: #007bff;
+  
+      }
+  
+      .logout i:hover{
+        color: rgb(255, 0, 17);
+        transform: scale(1.3);
+      }
+      
+      .log_div{
+        display: flex;
+      justify-content: flex-end;
+      align-items: baseline;
+      }
       /* Style for flashed messages */
       .flash_div {
         position: absolute;
@@ -234,12 +240,14 @@
       </div>
     </div>
     <div  class="row g-4 row_new">
-      <!-- Courses Box -->
-      <div class="col-md-6 col-lg-3">
+       <!-- Course Box -->
+       <div class="col-md-6 col-lg-3">
+        <a href="/student/course" class="card-link">
         <div class="dashboard-card courses text-center">
-          <div class="card-icon mb-2">📘</div>
-          <a href="/student/course" class="card-link">
-            <h4>Courses</h4>
+          <div class="card-icon mb-2"><img class="img-fluid attendance-img"
+              src="https://cdn-icons-png.flaticon.com/512/9257/9257394.png" alt=""></div>
+            <h4>Course
+            </h4>
           </a>
           <div class="card-count"></div>
         </div>
@@ -258,10 +266,12 @@
       </div>
        <!-- Profile Box -->
       <div class="col-md-6 col-lg-3">
+        <a href="/profile" class="card-link">
         <div class="dashboard-card profile text-center">
-          <div class="card-icon mb-2"><i class="fa-solid fa-user"></i></div>
-          <a href="/profile" class="card-link">
-            <h4>Profile</h4>
+          <div class="card-icon mb-2"><img class="img-fluid attendance-img"
+              src="https://cdn-icons-png.flaticon.com/512/3899/3899618.png" alt=""></div>
+            <h4>Profile
+            </h4>
           </a>
           <div class="card-count"></div>
         </div>

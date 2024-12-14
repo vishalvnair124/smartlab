@@ -238,9 +238,9 @@ def reset_password():
 @app.route('/student/course')
 def student_course():
     student_id = session.get('student_id')
-    # if session.get('user_type') != 'student':
-    #     flash('You must be logged in as a student to access the dashboard.', 'error')
-    #     return redirect("/")  # Redirect to login page if not logged in as a student
+    if session.get('user_type') != 'student':
+        flash('You must be logged in as a student to access the dashboard.', 'error')
+        return redirect("/")  # Redirect to login page if not logged in as a student
 
     conn = get_db_connection() 
     cursor = conn.cursor(dictionary=True)
@@ -250,17 +250,21 @@ def student_course():
                 sd.*,
                 bd.bat_name,
                 cd.course_name,
-                cd.course_id
+                cd.course_id,
+                ss.course_id,
+                COUNT(ss.s_id) AS total_sessions,
+                SUM(CASE WHEN ss.make_attendance = 1 AND sa.std_id = sd.std_id THEN 1 ELSE 0 END) AS attended_sessions
+                
             FROM student_details sd
             JOIN batch_details bd ON sd.bat_id = bd.bat_id
             JOIN course_details cd ON bd.bat_id = cd.bat_id
+            JOIN session_details ss ON ss.course_id = cd.course_id
+            LEFT JOIN student_attendance sa ON sa.s_id = ss.s_id AND sa.std_id = sd.std_id
             WHERE sd.std_id = %s
-            '''
-            
+            GROUP BY sd.std_id, bd.bat_name, cd.course_name, cd.course_id
+    #         '''       
     cursor.execute(query, (student_id,))
     course = cursor.fetchall()
-
-
     return render_template('student/course.html', course=course)
 
 
