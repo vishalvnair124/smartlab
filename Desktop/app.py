@@ -1,6 +1,7 @@
 from customtkinter import *
 from PIL import Image
 import uuid
+import requests
 
 
 
@@ -50,13 +51,44 @@ def send_logout(response_from):
               }
     return respons
 
-def device_registration(email,password):
-    mac_add = get_mac_address()
-    print(email,password,mac_add)
-    response = {
-               "response":200
-              }
-    return response
+
+def device_registration(email, password):
+    mac_add = get_mac_address()  # Assuming this function fetches the MAC address
+    print(f"Sending registration for {email} with MAC address: {mac_add}")
+    
+    # Prepare data to be sent in the POST request
+    data = {
+        'email': email,
+        'password': password,
+        'mac_address': mac_add
+    }
+    
+    try:
+        # Send a POST request with the email, password, and MAC address as JSON data
+        response = requests.post("http://127.0.0.1:5000/device_registration", json=data)
+        
+        # Log the response from the server for debugging purposes
+        print(f"Server response: {response.text}")
+        
+        # Check if the response status code is 200 (OK)
+        if response.status_code == 200:
+            return response.json()  # Return the JSON response if successful
+        else:
+            print(f"Failed with status code {response.status_code}")
+            return {"response": response.status_code, "message": response.text}
+    
+    except requests.exceptions.RequestException as e:
+        # This will catch any network-related errors, such as connection timeouts, etc.
+        print(f"Error making the request: {e}")
+        return {"response": 500, "message": f"Request exception: {str(e)}"}
+    
+    except Exception as e:
+        # This will catch any other exceptions
+        print(f"Unexpected error: {e}")
+        return {"response": 500, "message": f"Unexpected error: {str(e)}"}
+
+
+
 
 # Function to Replace the Right Frame
 def on_login_click(email_entry, password_entry, session_entry):

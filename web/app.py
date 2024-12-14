@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file,session
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file,session
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
@@ -902,6 +902,57 @@ def view_attendance(s_id):
         students=students,
         attendance_pdf_url=attendance_pdf_url
     )
+
+
+#device Registration
+
+@app.route("/device_registration", methods=["POST"])
+def device_registration():
+    # Get data from the incoming POST request
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    mac_address = data.get("mac_address")
+    
+    if not email or not password or not mac_address:
+        return jsonify({"response": 400, "message": "Missing required parameters"}), 400
+    
+    # Connect to the database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Step 1: Validate admin credentials from the admin table
+        query = "SELECT * FROM admin WHERE admin_email = %s AND admin_passwd = %s"
+        cursor.execute(query, (email, password))
+        admin = cursor.fetchone()
+
+        if admin is None:
+            # If admin credentials are invalid, return an error message
+            return jsonify({"response": 404, "message": "Admin credentials are incorrect"}), 404
+
+        # Step 2: If admin is valid, add the device's MAC address to the device_details table
+        insert_query = '''
+            INSERT INTO device_details (device_name, device_mac, device_status)
+            VALUES (%s, %s, %s)
+        '''
+        # Insert with 'Temp' as device_name and status '0'
+        cursor.execute(insert_query, ('Temp', mac_address, 0))
+        conn.commit()
+
+        # Step 3: Return a success message if the device is registered
+        return jsonify({"response": 200, "message": "Device registered successfully"}), 200
+
+    except Exception as e:
+        # If any error occurs, rollback and return failure
+        conn.rollback()
+        return jsonify({"response": 500, "message": f"An error occurred: {str(e)}"}), 500
+
+    finally:
+        # Close the connection
+        cursor.close()
+        conn.close()
+
 
 
 
