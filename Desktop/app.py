@@ -1,3 +1,4 @@
+import json
 from customtkinter import *
 from PIL import Image
 import uuid
@@ -34,24 +35,87 @@ def get_mac_address():
     except Exception as e:
         return f"Error: {e}"
 
-def send_login(email, password, session):
-    # Get Email and Password from Entry Fields
-    mac_add = get_mac_address()
-    
-    respons = {
-               "response":200,
-               "session_end":"12-12-12",
-               "name" : "John",
-               "email" : "vishalvnair124@gmail.com"
-              }
-    return respons
+def send_login(email, password, session_id):
+    global invalid_text
+    # Step 1: Get the MAC address of the device
+    mac_address = get_mac_address()
+
+    # Step 2: Define the server URL (replace with your Flask server URL)
+    url = "http://127.0.0.1:5000/slogin"  # Update with your actual server URL
+
+    # Step 3: Prepare the request payload
+    payload = {
+        "email": email,
+        "password": password,
+        "session": session_id,
+        "mac_address": mac_address
+    }
+
+    try:
+        # Step 4: Send POST request to the server
+        response = requests.post(url, json=payload)
+
+        # Step 5: Check the response status code and handle the result
+        if response.status_code == 200:
+            respons = response.json()
+            print("Login successful!")
+            # print(f"Name: {respons['name']}")
+            # print(f"Email: {respons['email']}")
+            # print(f"Session Ends At: {respons['session_end']}")
+            return respons
+        elif response.status_code == 401:
+            print("Invalid credentials or inactive student.")
+            invalid_text = "Invalid credentials"  
+            invalid_var.set(True)  
+        elif response.status_code == 403:
+            print("Unauthorized device or inactive device.")
+            invalid_text = "Unauthorized device" 
+            invalid_var.set(True)  
+        elif response.status_code == 404:
+            print("Invalid or inactive session.")
+            invalid_text = "Invalid  session"  
+            invalid_var.set(True)  
+        else:
+            print("An error occurred:", response.json().get('message', 'Unknown error'))
+            invalid_text = "Unknown error"  
+            invalid_var.set(True)  
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to send request: {e}")
+
+    # If unsuccessful, return a failure response
+    return {
+        "response": 500,
+        "message": "Login failed due to an error."
+    }
+
+
+
 
 def send_logout(response_from):
-    print("Logout Request Send",response_from)
-    respons = {
-               "response":200
-              }
-    return respons
+    mac_address = get_mac_address()
+    
+    try:
+        # API Endpoint for Logout
+        logout_url = "http://127.0.0.1:5000/slogout"  
+        response_from.update({"mac_address": mac_address})
+        # print(response_from)
+        # Send POST request with response_from data
+        response = requests.post(logout_url, json=response_from)
+        # print("test2")
+        # Check server response
+        if response.status_code == 200:
+            print("Logout Successful")
+            return response.json()  # Return the response JSON from the server
+        else:
+            print(f"Logout Failed: {response.status_code}")
+            return response.json()  # Return error details from the server's response
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending logout request: {e}")
+        return {
+            "response": 500,
+            "message": "Failed to send logout request"
+        }
 
 
 
@@ -127,7 +191,6 @@ def on_login_click(email_entry, password_entry, session_entry):
         if response["response"] == 200:
             display_logedin(response)
         else:
-            invalid_var.set(True)
             display_login_form()
 
 def display_registred():
@@ -149,6 +212,7 @@ def display_registred():
         ).pack(pady=10)
     
 def logout(response_from):
+    
     response = send_logout(response_from)
     if response["response"] == 200:
         for widget in right_panel.winfo_children():

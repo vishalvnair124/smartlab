@@ -5,3 +5,4 @@ pip install flask
 pip install flask mysql-connector-python
 pip install reportlab
 pip install requests
+pip install pyinstaller
