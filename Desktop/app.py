@@ -1,3 +1,4 @@
+import json
 from customtkinter import *
 from PIL import Image
 import uuid
@@ -89,12 +90,32 @@ def send_login(email, password, session_id):
 
 
 
+
 def send_logout(response_from):
-    print("Logout Request Send",response_from)
-    respons = {
-               "response":200
-              }
-    return respons
+    mac_address = get_mac_address()
+    
+    try:
+        # API Endpoint for Logout
+        logout_url = "http://127.0.0.1:5000/slogout"  
+        response_from.update({"mac_address": mac_address})
+        # print(response_from)
+        # Send POST request with response_from data
+        response = requests.post(logout_url, json=response_from)
+        # print("test2")
+        # Check server response
+        if response.status_code == 200:
+            print("Logout Successful")
+            return response.json()  # Return the response JSON from the server
+        else:
+            print(f"Logout Failed: {response.status_code}")
+            return response.json()  # Return error details from the server's response
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending logout request: {e}")
+        return {
+            "response": 500,
+            "message": "Failed to send logout request"
+        }
 
 
 
@@ -191,6 +212,7 @@ def display_registred():
         ).pack(pady=10)
     
 def logout(response_from):
+    
     response = send_logout(response_from)
     if response["response"] == 200:
         for widget in right_panel.winfo_children():

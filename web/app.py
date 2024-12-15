@@ -1041,11 +1041,83 @@ def slogin():
             "response": 200,
             "session_end": session_end_str,  # Returning session_end as HH:MM:SS string
             "name": student['std_name'],
-            "email": student['std_email']
+            "email": student['std_email'],
+            "password":password ,
+            "session_id":session_id
         })
 
     except Exception as e:
         print(f"Error during login: {e}")
+        return jsonify({"response": 500, "message": "Internal server error"}), 500
+
+
+
+
+@app.route('/slogout', methods=['POST'])
+def slogout():
+    # Get data from the request
+    response_from = request.json
+
+    try:
+        # Extract necessary data
+        email = response_from.get('email')
+        password = response_from.get('password')
+        mac_address = response_from.get('mac_address')
+        session_id = response_from.get('session_id')
+
+        # Step 1: Connect to the database
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Step 2: Validate email and password
+        student_query = """
+            SELECT std_id 
+            FROM student_details 
+            WHERE std_email = %s AND std_passwd = %s AND std_status = 1
+        """
+        cursor.execute(student_query, (email, password))
+        student = cursor.fetchone()
+
+        if not student:
+            conn.close()
+            return jsonify({"response": 401, "message": "Invalid credentials or inactive student"}), 401
+    
+        # Step 3: Validate device MAC address
+        device_query = """
+            SELECT device_id 
+            FROM device_details
+            WHERE device_mac = %s AND device_status = 1
+        """
+        cursor.execute(device_query, (mac_address,))
+        device = cursor.fetchone()
+        
+
+        if not device:
+            conn.close()
+            return jsonify({"response": 403, "message": "Unauthorized device or inactive"}), 403
+
+        # Step 4: Update logout time for the session in the `student_attendance` table
+        attendance_query = """
+            UPDATE student_attendance 
+            SET logout_time = %s 
+            WHERE std_id = %s AND s_id = %s AND logout_time IS NULL
+        """
+        cursor.execute(attendance_query, (datetime.now(), student['std_id'], session_id))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({"response": 404, "message": "No matching session found or already logged out"}), 404
+
+        # Step 5: Close the connection and return success response
+        conn.close()
+        return jsonify({
+            "response": 200,
+            "message": "Logout successful"
+        })
+
+    except Exception as e:
+        print(f"Error during logout: {e}")
         return jsonify({"response": 500, "message": "Internal server error"}), 500
 
 
