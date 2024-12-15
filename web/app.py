@@ -367,6 +367,10 @@ def admin_dashboard():
     
 @app.route('/admin/session/<int:s_id>/attendance_view/pdf')
 def generate_attendance_pdf(s_id):
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -448,6 +452,10 @@ def generate_attendance_pdf(s_id):
 
 @app.route('/admin/batches')
 def batches():
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     # Fetch all batches
     conn = get_db_connection()  # Establish connection
     cursor = conn.cursor(dictionary=True)  # Ensure results are dictionaries
@@ -457,8 +465,12 @@ def batches():
     
 
 
-@app.route('/admin/create_batch', methods=['GET', 'POST'])
+@app.route('/admin/create_batch', methods=['GET', 'POST']) 
 def manage_batches():
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()  # Establish connection
     cursor = conn.cursor(dictionary=True)  # Ensure results are dictionaries
     if request.method == 'POST':
@@ -473,6 +485,10 @@ def manage_batches():
     
 @app.route('/admin/edit_batch/<int:bat_id>', methods=['GET', 'POST'])
 def edit_batch(bat_id):
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()  # Establish database connection
     cursor = conn.cursor(dictionary=True)  # Use dictionary cursor for ease of access
 
@@ -509,6 +525,12 @@ def edit_batch(bat_id):
 
 @app.route('/admin/deactivate_batch/<int:bat_id>', methods=['GET'])
 def deactivate_batch(bat_id):
+    
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
+    
     conn = get_db_connection()  # Establish database connection
     cursor = conn.cursor()
 
@@ -528,6 +550,10 @@ def deactivate_batch(bat_id):
 # courses
 @app.route('/admin/courses', methods=['GET', 'POST'])
 def courses():
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()  # Establish connection
     cursor = conn.cursor(dictionary=True)  # Use dictionary cursor for ease of access
 
@@ -565,10 +591,13 @@ def courses():
     return render_template('admin/courses.html', courses=courses, batches=batches)
 
 
-
 # Route to edit a course
 @app.route('/admin/edit_course/<int:course_id>', methods=['GET', 'POST'])
 def edit_course(course_id):
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -607,6 +636,10 @@ def edit_course(course_id):
 # Route to deactivate a course
 @app.route('/admin/deactivate_course/<int:course_id>', methods=['GET'])
 def deactivate_course(course_id):
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -624,6 +657,10 @@ def deactivate_course(course_id):
 # admin students
 @app.route('/admin/students', methods=['GET'])
 def students():
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -641,6 +678,10 @@ def students():
 
 @app.route('/admin/student_details/<int:std_id>', methods=['GET', 'POST'])
 def student_details(std_id):
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -675,6 +716,10 @@ def student_details(std_id):
 #devices
 @app.route('/admin/devices', methods=['GET'])
 def view_devices():
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -687,6 +732,10 @@ def view_devices():
 
 @app.route('/admin/update_device/<int:device_id>', methods=['GET', 'POST'])
 def update_device(device_id):
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -716,6 +765,10 @@ def update_device(device_id):
 
 @app.route('/admin/delete_device/<int:device_id>', methods=['GET'])
 def delete_device(device_id):
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -732,6 +785,10 @@ def delete_device(device_id):
 #sessions
 @app.route('/admin/session/create', methods=['GET', 'POST'])
 def create_session():
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -772,6 +829,10 @@ def create_session():
 
 @app.route('/admin/sessions', methods=['GET'])
 def sessions():
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -792,42 +853,106 @@ def sessions():
     conn.close()
     return render_template('admin/sessions.html', sessions=sessions)
 
+# @app.route('/admin/session/<int:session_id>/edit', methods=['GET', 'POST']) #!old sessions auth code
+# def edit_session(session_id):
+#     if 'user_type' not in session or session['user_type'] != 'admin':
+#         flash('You must be logged in as an admin to access this page.', 'error')
+#         return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
+#     conn = get_db_connection()
+#     cursor = conn.cursor(dictionary=True)
+
+#     if request.method == 'POST':
+#         course_id = request.form['course_id']
+#         s_date = request.form['s_date']
+#         s_start_time = request.form['s_start_time']
+#         s_end_time = request.form['s_end_time']
+#         make_attendance = request.form.get('make_attendance', 0)
+
+#         try:
+#             cursor.execute("""
+#                 UPDATE session_details
+#                 SET course_id = %s, s_date = %s, s_start_time = %s, s_end_time = %s, make_attendance = %s
+#                 WHERE s_id = %s
+#             """, (course_id, s_date, s_start_time, s_end_time, make_attendance, session_id))
+#             conn.commit()
+#             flash("Session updated successfully!", "success")
+#             return redirect('/admin/sessions')
+#         except mysql.connector.Error as e:
+#             flash(f"Error updating session: {str(e)}", "danger")
+#     else:
+#         try:
+#             # Fetch session details for the form
+#             cursor.execute("SELECT * FROM session_details WHERE s_id = %s", (session_id,))
+#             session = cursor.fetchone()
+
+#             # Fetch courses for the dropdown
+#             cursor.execute("SELECT course_id, course_name FROM course_details")
+#             courses = cursor.fetchall()
+#         except mysql.connector.Error as e:
+#             flash(f"Error updating session: {str(e)}", "danger")
+            
+
+#     conn.close()
+#     return render_template('admin/session_edit.html', session=session, courses=courses)
+
 @app.route('/admin/session/<int:session_id>/edit', methods=['GET', 'POST'])
 def edit_session(session_id):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    if session.get('user_type') != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not an admin
+    
+    session_data = None  # Initialize session_data and courses to handle potential errors
+    courses = []
 
-    if request.method == 'POST':
-        course_id = request.form['course_id']
-        s_date = request.form['s_date']
-        s_start_time = request.form['s_start_time']
-        s_end_time = request.form['s_end_time']
-        make_attendance = request.form.get('make_attendance', 0)
+    try:
+        # Establish the database connection using a context manager
+        with get_db_connection() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                
+                if request.method == 'POST':
+                    course_id = request.form['course_id']
+                    s_date = request.form['s_date']
+                    s_start_time = request.form['s_start_time']
+                    s_end_time = request.form['s_end_time']
+                    make_attendance = request.form.get('make_attendance', 0)
 
-        try:
-            cursor.execute("""
-                UPDATE session_details
-                SET course_id = %s, s_date = %s, s_start_time = %s, s_end_time = %s, make_attendance = %s
-                WHERE s_id = %s
-            """, (course_id, s_date, s_start_time, s_end_time, make_attendance, session_id))
-            conn.commit()
-            flash("Session updated successfully!", "success")
-            return redirect('/admin/sessions')
-        except mysql.connector.Error as e:
-            flash(f"Error updating session: {str(e)}", "danger")
-    else:
-        # Fetch session details for the form
-        cursor.execute("SELECT * FROM session_details WHERE s_id = %s", (session_id,))
-        session = cursor.fetchone()
+                    try:
+                        cursor.execute("""
+                            UPDATE session_details
+                            SET course_id = %s, s_date = %s, s_start_time = %s, s_end_time = %s, make_attendance = %s
+                            WHERE s_id = %s
+                        """, (course_id, s_date, s_start_time, s_end_time, make_attendance, session_id))
+                        conn.commit()
+                        flash("Session updated successfully!", "success")
+                        return redirect('/admin/sessions')
+                    except mysql.connector.Error as e:
+                        flash(f"Error updating session: {str(e)}", "danger")
 
-        # Fetch courses for the dropdown
-        cursor.execute("SELECT course_id, course_name FROM course_details")
-        courses = cursor.fetchall()
+                else:
+                    try:
+                        # Fetch session details for the form
+                        cursor.execute("SELECT * FROM session_details WHERE s_id = %s", (session_id,))
+                        session_data = cursor.fetchone()
 
-    conn.close()
-    return render_template('admin/session_edit.html', session=session, courses=courses)
+                        # Fetch courses for the dropdown
+                        cursor.execute("SELECT course_id, course_name FROM course_details")
+                        courses = cursor.fetchall()
 
-@app.route('/admin/session/<int:session_id>/delete', methods=['POST'])
+                        if not session_data:
+                            flash("Session not found.", "error")
+                            return redirect('/admin/sessions')
+
+                    except mysql.connector.Error as e:
+                        flash(f"Error retrieving session details: {str(e)}", "danger")
+    
+    except mysql.connector.Error as e:
+        flash(f"Database connection error: {str(e)}", "danger")
+
+    return render_template('admin/session_edit.html', session=session_data, courses=courses)
+
+
+@app.route('/admin/session/<int:session_id>/delete', methods=['POST']) #! no need for auth
 def delete_session(session_id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -844,8 +969,13 @@ def delete_session(session_id):
     return redirect('/admin/sessions')
 
 
+
 @app.route('/admin/session/<int:s_id>/attendance')
 def view_attendance(s_id):
+    if 'user_type' not in session or session['user_type'] != 'admin':
+        flash('You must be logged in as an admin to access this page.', 'error')
+        return redirect(url_for('login'))  # Redirect to the login page if not admin
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -908,6 +1038,8 @@ def view_attendance(s_id):
 
 @app.route("/device_registration", methods=["POST"])
 def device_registration():
+    # no need for session authentication
+    
     # Get data from the incoming POST request
     data = request.get_json()
     email = data.get("email")
