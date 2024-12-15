@@ -59,26 +59,26 @@ def send_login(email, password, session_id):
         if response.status_code == 200:
             respons = response.json()
             print("Login successful!")
-            print(f"Name: {respons['name']}")
-            print(f"Email: {respons['email']}")
-            print(f"Session Ends At: {respons['session_end']}")
+            # print(f"Name: {respons['name']}")
+            # print(f"Email: {respons['email']}")
+            # print(f"Session Ends At: {respons['session_end']}")
             return respons
         elif response.status_code == 401:
             print("Invalid credentials or inactive student.")
-            invalid_text = "Invalid credentials"  # Update invalid text
-            invalid_var.set(True)  # Trigger UI update
+            invalid_text = "Invalid credentials"  
+            invalid_var.set(True)  
         elif response.status_code == 403:
             print("Unauthorized device or inactive device.")
-            invalid_text = "Unauthorized device"  # Update invalid text
-            invalid_var.set(True)  # Trigger UI update
+            invalid_text = "Unauthorized device" 
+            invalid_var.set(True)  
         elif response.status_code == 404:
             print("Invalid or inactive session.")
-            invalid_text = "Invalid  session"  # Update invalid text
-            invalid_var.set(True)  # Trigger UI update
+            invalid_text = "Invalid  session"  
+            invalid_var.set(True)  
         else:
             print("An error occurred:", response.json().get('message', 'Unknown error'))
-            invalid_text = "Unknown error"  # Update invalid text
-            invalid_var.set(True)  # Trigger UI update
+            invalid_text = "Unknown error"  
+            invalid_var.set(True)  
     except requests.exceptions.RequestException as e:
         print(f"Failed to send request: {e}")
 
