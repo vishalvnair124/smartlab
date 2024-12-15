@@ -4,4 +4,4 @@ myenv\Scripts\activate
 
 deactivate
 
-
+pyinstaller app.py --noconsole --icon ./attendance.ico --onefile
