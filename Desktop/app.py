@@ -9,7 +9,7 @@ import requests
 # Initialize Application
 app = CTk()
 app.geometry("600x480")
-app.iconbitmap("./attendance.ico")
+# app.iconbitmap("./attendance.ico")
 app.title("SmartLab")
 
 invalid_var = BooleanVar(value=False)
