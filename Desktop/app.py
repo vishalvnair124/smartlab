@@ -2,7 +2,7 @@ import json
 from customtkinter import *
 from PIL import Image
 import uuid
-import requests
+import requests # type: ignore
 
 
 
